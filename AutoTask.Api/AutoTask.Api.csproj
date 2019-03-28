@@ -4,6 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Copyright>Panoramic Data Limited 2019</Copyright>
     <Description>AutoTask API</Description>
+    <PackageProjectUrl>https://github.com/panoramicdata/AutoTask.Api</PackageProjectUrl>
+    <PackageIconUrl>https://www.autotask.com/images/default-source/solutions/psa-logo-colored-icon.png?sfvrsn=3</PackageIconUrl>
+    <RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>AutoTask API</PackageTags>
+    <PackageReleaseNotes>Initial implementation</PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
