@@ -11,6 +11,7 @@
     <PackageTags>AutoTask API</PackageTags>
     <PackageReleaseNotes>Initial implementation</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
