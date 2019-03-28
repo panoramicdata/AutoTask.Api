@@ -12,6 +12,9 @@
     <PackageReleaseNotes>Initial implementation</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Company>Panoramic Data Limited</Company>
+    <Authors>David Bond</Authors>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
