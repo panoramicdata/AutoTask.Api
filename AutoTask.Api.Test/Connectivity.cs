@@ -17,5 +17,14 @@ namespace AutoTask.Api.Test
 				.ConfigureAwait(false);
 			Assert.NotNull(result);
 		}
+
+		[Fact]
+		public async void GetFieldInfo()
+		{
+			var result = await Client
+				.GetFieldInfoAsync(nameof(Account))
+				.ConfigureAwait(false);
+			Assert.NotNull(result);
+		}
 	}
 }

@@ -71,6 +71,9 @@ namespace AutoTask.Api
 			_autotaskIntegrations = new AutotaskIntegrations();
 		}
 
+		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
+			=> await _autoTaskClient.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType)).ConfigureAwait(false);
+
 		public async Task<IEnumerable<Entity>> ExecuteQueryAsync(string sXml)
 		{
 			// this example will not handle the 500 results limitation.
