@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>AutoTask API</PackageTags>
-    <PackageReleaseNotes>Initial implementation</PackageReleaseNotes>
+    <PackageReleaseNotes>Adde GetVersion() to show the WDSL version in use</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>Panoramic Data Limited</Company>

@@ -91,5 +91,7 @@ namespace AutoTask.Api
 
 			return atwsResponse.queryResult.EntityResults;
 		}
+
+		public async Task<string> GetWsdlVersion() => (await _autoTaskClient.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations)).ConfigureAwait(false)).GetWsdlVersionResult;
 	}
 }

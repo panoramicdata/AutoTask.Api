@@ -19,6 +19,15 @@ namespace AutoTask.Api.Test
 		}
 
 		[Fact]
+		public async void GetWsdlVersion_Succeeds()
+		{
+			var result = await Client
+				.GetWsdlVersion()
+				.ConfigureAwait(false);
+			Assert.NotNull(result);
+		}
+
+		[Fact]
 		public async void GetFieldInfo()
 		{
 			var result = await Client

@@ -8,6 +8,9 @@ To execute a query using the [AutoTask query language](https://ww4.autotask.net/
 
 ```C#
 var client = new Client(autoTaskCredentials.Username, autoTaskCredentials.Password);
+
+var version = await client.GetVersion();
+
 var result = await client
 	.ExecuteQueryAsync("<queryxml><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>")
 	.ConfigureAwait(false);
