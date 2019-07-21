@@ -1,4 +1,5 @@
-﻿using AutoTask.Api.Test.Config;
+﻿using AutoTask.Api.Config;
+using AutoTask.Api.Test.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,8 +15,6 @@ namespace AutoTask.Api.Test
 {
 	public class TestWithOutput
 	{
-		private const int LateArrivingDataWindowHours = 24;
-
 		protected TestWithOutput(ITestOutputHelper iTestOutputHelper)
 		{
 			ITestOutputHelper = iTestOutputHelper;
@@ -28,6 +27,7 @@ namespace AutoTask.Api.Test
 			Client = new Client(
 				autoTaskCredentials.Username,
 				autoTaskCredentials.Password);
+			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration { Username = autoTaskCredentials.Username, Password = autoTaskCredentials.Password });
 			Stopwatch = Stopwatch.StartNew();
 		}
 
@@ -63,6 +63,7 @@ namespace AutoTask.Api.Test
 		protected long StartEpoch { get; }
 		protected long EndEpoch { get; }
 		protected Client Client { get; }
+		protected AutoTaskClient AutoTaskClient { get; }
 
 		protected void AssertIsFast(int durationSeconds) => Assert.InRange(Stopwatch.ElapsedMilliseconds, 0, durationSeconds * 1000);
 	}
