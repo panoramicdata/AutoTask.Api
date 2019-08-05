@@ -212,7 +212,7 @@ namespace AutoTask.Api
 			}
 		}
 
-		void IDisposable.Dispose() => Dispose(true);
+		public void Dispose() => Dispose(true);
 		#endregion
 	}
 }
