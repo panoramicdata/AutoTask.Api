@@ -13,7 +13,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>Panoramic Data Limited</Company>
-    <Authors>David Bond</Authors>
+    <Authors>David Bond, Daniel Abbatt</Authors>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
