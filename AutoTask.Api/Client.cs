@@ -153,6 +153,31 @@ namespace AutoTask.Api
 			return deletedEntity;
 		}
 
+		public async Task<Entity> UpdateAsync(Entity entity)
+		{
+			var updateRequest = new updateRequest(_autotaskIntegrations, new[] { entity });
+			var updateResponse = await _autoTaskClient.updateAsync(updateRequest).ConfigureAwait(false);
+			var errorCount = updateResponse.updateResult.Errors.Length;
+			if (errorCount > 0)
+			{
+				_logger.LogError($"There was an error updating the entity. {errorCount} errors occurred.");
+				for (var errorNum = 0; errorNum < errorCount; errorNum++)
+				{
+					_logger.LogError($"Error {errorNum + 1}: {updateResponse.updateResult.Errors[errorNum].Message}");
+				}
+				_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
+				throw new AutoTaskApiException($"Errors occurred during update of the AutoTask entity: {string.Join(";", updateResponse.updateResult.Errors.Select(e => e.Message))}");
+			}
+
+			var updatedEntity = updateResponse?.updateResult?.EntityResults?.FirstOrDefault();
+			_logger.LogDebug($"Successfully updated entity with Id: {updatedEntity?.id.ToString() ?? "UNKNOWN!"}");
+			if (updatedEntity == null)
+			{
+				throw new AutoTaskApiException("Did not get a result back after updating the AutoTask entity.");
+			}
+			return updatedEntity;
+		}
+
 		public async Task<string> GetWsdlVersion() => (await _autoTaskClient.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations)).ConfigureAwait(false)).GetWsdlVersionResult;
 	}
 }
