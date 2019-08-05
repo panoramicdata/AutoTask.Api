@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
@@ -9,9 +11,11 @@ namespace AutoTask.Api
 	{
 		private readonly ATWSSoapClient _autoTaskClient;
 		private readonly AutotaskIntegrations _autotaskIntegrations;
+		private readonly ILogger _logger;
 
-		public Client(string username, string password)
+		public Client(string username, string password, ILogger logger = null)
 		{
+			_logger = logger ?? new NullLogger<Client>();
 			var binding = new BasicHttpBinding
 			{
 				SendTimeout = new TimeSpan(0, 0, 0, 0, 100000),
@@ -64,6 +68,9 @@ namespace AutoTask.Api
 			var ea = new EndpointAddress(zoneInfo.getZoneInfoResult.URL);
 
 			_autoTaskClient = new ATWSSoapClient(myBinding, ea);
+
+			_autoTaskClient.Endpoint.EndpointBehaviors.Add(new AutoTaskLogger(_logger));
+
 			_autoTaskClient.ClientCredentials.UserName.UserName = username;
 			_autoTaskClient.ClientCredentials.UserName.Password = password;
 

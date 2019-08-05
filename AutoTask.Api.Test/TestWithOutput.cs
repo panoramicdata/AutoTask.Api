@@ -14,8 +14,6 @@ namespace AutoTask.Api.Test
 {
 	public class TestWithOutput
 	{
-		private const int LateArrivingDataWindowHours = 24;
-
 		protected TestWithOutput(ITestOutputHelper iTestOutputHelper)
 		{
 			ITestOutputHelper = iTestOutputHelper;
@@ -27,7 +25,8 @@ namespace AutoTask.Api.Test
 			var autoTaskCredentials = configuration.AutoTaskCredentials;
 			Client = new Client(
 				autoTaskCredentials.Username,
-				autoTaskCredentials.Password);
+				autoTaskCredentials.Password,
+				iTestOutputHelper.BuildLoggerFor<Client>());
 			Stopwatch = Stopwatch.StartNew();
 		}
 

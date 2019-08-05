@@ -13,7 +13,7 @@ namespace AutoTask.Api.Test
 		public async void BasicTest_Connects()
 		{
 			var result = await Client
-				.ExecuteQueryAsync("<queryxml><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>")
+				.ExecuteQueryAsync("<queryxmlX><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>")
 				.ConfigureAwait(false);
 			Assert.NotNull(result);
 		}
