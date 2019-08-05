@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>AutoTask API</PackageTags>
-    <PackageReleaseNotes>Added support for Update.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added support for IDisposable.</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>Panoramic Data Limited</Company>

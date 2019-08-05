@@ -10,11 +10,12 @@ using System.Threading.Tasks;
 
 namespace AutoTask.Api
 {
-	public class Client
+	public class Client : IDisposable
 	{
 		private readonly ATWSSoapClient _autoTaskClient;
 		private readonly AutotaskIntegrations _autotaskIntegrations;
 		private readonly ILogger _logger;
+		private bool disposed; // To detect redundant calls
 
 		public Client(string username, string password, ILogger logger = null)
 		{
@@ -179,5 +180,39 @@ namespace AutoTask.Api
 		}
 
 		public async Task<string> GetWsdlVersion() => (await _autoTaskClient.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations)).ConfigureAwait(false)).GetWsdlVersionResult;
+
+		#region IDisposable Support
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposed)
+			{
+				if (disposing)
+				{
+					try
+					{
+						_autoTaskClient.Close();
+					}
+					catch (CommunicationException e)
+					{
+						_autoTaskClient.Abort();
+					}
+					catch (TimeoutException e)
+					{
+						_autoTaskClient.Abort();
+					}
+					catch (Exception e)
+					{
+						_autoTaskClient.Abort();
+						throw;
+					}
+				}
+
+				disposed = true;
+			}
+		}
+
+		void IDisposable.Dispose() => Dispose(true);
+		#endregion
 	}
 }
