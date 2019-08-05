@@ -25,12 +25,8 @@ namespace AutoTask.Api
 		public string DescriptionKey => "Description";
 		public string TicketNoteTitleKey => "TicketNoteTitle";
 
-		public AutoTaskClient(
-			AutoTaskConfiguration config
-			)
-		{
-			_configuration = config;
-		}
+		public AutoTaskClient(AutoTaskConfiguration config)
+			=> _configuration = config;
 
 		private async Task<ATWSSoap> GetClientAsync()
 		{
