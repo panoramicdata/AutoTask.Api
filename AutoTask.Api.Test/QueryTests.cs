@@ -1,41 +1,14 @@
-using AutoTask.Api.Filters;
+﻿using AutoTask.Api.Filters;
 using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace AutoTask.Api.Test
 {
-	public class Connectivity : TestWithOutput
+	public class QueryTests : TestWithOutput
 	{
-		public Connectivity(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
+		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 		{
-		}
-
-		[Fact]
-		public async void BasicTest_Connects()
-		{
-			var result = await Client
-				.ExecuteQueryAsync("<queryxmlX><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>")
-				.ConfigureAwait(false);
-			Assert.NotNull(result);
-		}
-
-		[Fact]
-		public async void GetWsdlVersion_Succeeds()
-		{
-			var result = await Client
-				.GetWsdlVersion()
-				.ConfigureAwait(false);
-			Assert.NotNull(result);
-		}
-
-		[Fact]
-		public async void GetFieldInfo()
-		{
-			var result = await Client
-				.GetFieldInfoAsync(nameof(Account))
-				.ConfigureAwait(false);
-			Assert.NotNull(result);
 		}
 
 		[Fact]
@@ -64,7 +37,7 @@ namespace AutoTask.Api.Test
 							Operator = Operator.Equals,
 							Value = "2"
 						},
-						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "5" }, // Complete
+						// new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "5" }, // Complete
 						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "29" }, // Resolved
 						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "34" }, // Cancelled
 						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "66" }, // SD/NOC Responded
