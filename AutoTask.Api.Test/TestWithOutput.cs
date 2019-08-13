@@ -1,4 +1,4 @@
-﻿using AutoTask.Api.Config;
+using AutoTask.Api.Config;
 using AutoTask.Api.Test.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +26,8 @@ namespace AutoTask.Api.Test
 			var autoTaskCredentials = configuration.AutoTaskCredentials;
 			Client = new Client(
 				autoTaskCredentials.Username,
-				autoTaskCredentials.Password);
+				autoTaskCredentials.Password,
+				iTestOutputHelper.BuildLoggerFor<Client>());
 			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration { Username = autoTaskCredentials.Username, Password = autoTaskCredentials.Password });
 			Stopwatch = Stopwatch.StartNew();
 		}
