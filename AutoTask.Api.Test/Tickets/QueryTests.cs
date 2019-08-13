@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace AutoTask.Api.Test
+namespace AutoTask.Api.Test.Tickets
 {
 	public class QueryTests : TestWithOutput
 	{
