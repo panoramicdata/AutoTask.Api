@@ -1,4 +1,5 @@
 ﻿using AutoTask.Api.Exceptions;
+using AutoTask.Api.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
@@ -13,6 +14,9 @@ namespace AutoTask.Api
 	public class Client : IDisposable
 	{
 		private readonly ATWSSoapClient _autoTaskClient;
+
+		internal AutoTaskLogger AutoTaskLogger { get; }
+
 		private readonly AutotaskIntegrations _autotaskIntegrations;
 		private readonly ILogger _logger;
 		private bool disposed; // To detect redundant calls
@@ -30,21 +34,14 @@ namespace AutoTask.Api
 					MaxStringContentLength = 10000,
 					MaxDepth = 10000,
 					MaxArrayLength = 10000
-				}
-				,
+				},
 				Security = new BasicHttpSecurity
 				{
 					Mode = BasicHttpSecurityMode.Transport,
-					//Message = new BasicHttpMessageSecurity
-					//{
-					//	AlgorithmSuite = SecurityAlgorithmSuite.Default,
-					//	ClientCredentialType = BasicHttpMessageCredentialType.Certificate
-					//},
 					Transport = new HttpTransportSecurity
 					{
 						ClientCredentialType = HttpClientCredentialType.None,
 						ProxyCredentialType = HttpProxyCredentialType.None,
-						//Realm = ""
 					}
 				}
 			};
@@ -74,7 +71,8 @@ namespace AutoTask.Api
 			_autoTaskClient.Close();
 			_autoTaskClient = new ATWSSoapClient(myBinding, ea);
 
-			_autoTaskClient.Endpoint.EndpointBehaviors.Add(new AutoTaskLogger(_logger));
+			AutoTaskLogger = new AutoTaskLogger(_logger);
+			_autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
 
 			_autoTaskClient.ClientCredentials.UserName.UserName = username;
 			_autoTaskClient.ClientCredentials.UserName.Password = password;
@@ -97,12 +95,17 @@ namespace AutoTask.Api
 			var atwsResponse = await _autoTaskClient.queryAsync(new queryRequest(_autotaskIntegrations, sXml)).ConfigureAwait(false);
 			if (atwsResponse.queryResult.ReturnCode != 1)
 			{
-				throw new AutoTaskApiException(atwsResponse.queryResult);
+				var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
+
+				throw new AutoTaskApiException(BuildExceptionMessage(message));
 			}
 			// Executed fine
 
 			return atwsResponse.queryResult.EntityResults;
 		}
+
+		private string BuildExceptionMessage(string message)
+			=> $"Message: {message}; LastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}; LastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
 		public async Task<Entity> CreateAsync(Entity entity)
 		{
@@ -117,14 +120,15 @@ namespace AutoTask.Api
 					_logger.LogError($"Error {errorNum + 1}: {createResponse.createResult.Errors[errorNum].Message}");
 				}
 				_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
-				throw new AutoTaskApiException($"Errors occurred during creation of the AutoTask entity: {string.Join(";", createResponse.createResult.Errors.Select(e => e.Message))}");
+				var message = $"Errors occurred during creation of the AutoTask entity: {string.Join(";", createResponse.createResult.Errors.Select(e => e.Message))}";
+				throw new AutoTaskApiException(BuildExceptionMessage(message));
 			}
 
 			var createdEntity = createResponse?.createResult?.EntityResults?.FirstOrDefault();
 			_logger.LogDebug($"Successfully created entity with Id: {createdEntity?.id.ToString() ?? "UNKNOWN!"}");
 			if (createdEntity == null)
 			{
-				throw new AutoTaskApiException("Did not get a result back after creating the AutoTask entity.");
+				throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after creating the AutoTask entity."));
 			}
 			return createdEntity;
 		}
@@ -142,14 +146,14 @@ namespace AutoTask.Api
 					_logger.LogError($"Error {errorNum + 1}: {deleteResponse.deleteResult.Errors[errorNum].Message}");
 				}
 				_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
-				throw new AutoTaskApiException($"Errors occurred during deletion of the AutoTask entity: {string.Join(";", deleteResponse.deleteResult.Errors.Select(e => e.Message))}");
+				throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during deletion of the AutoTask entity: {string.Join(";", deleteResponse.deleteResult.Errors.Select(e => e.Message))}"));
 			}
 
 			var deletedEntity = deleteResponse?.deleteResult?.EntityResults?.FirstOrDefault();
 			_logger.LogDebug($"Successfully deleted entity with Id: {deletedEntity?.id.ToString() ?? "UNKNOWN!"}");
 			if (deletedEntity == null)
 			{
-				throw new AutoTaskApiException("Did not get a result back after deleting the AutoTask entity.");
+				throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after deleting the AutoTask entity."));
 			}
 			return deletedEntity;
 		}
@@ -167,14 +171,14 @@ namespace AutoTask.Api
 					_logger.LogError($"Error {errorNum + 1}: {updateResponse.updateResult.Errors[errorNum].Message}");
 				}
 				_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
-				throw new AutoTaskApiException($"Errors occurred during update of the AutoTask entity: {string.Join(";", updateResponse.updateResult.Errors.Select(e => e.Message))}");
+				throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during update of the AutoTask entity: {string.Join(";", updateResponse.updateResult.Errors.Select(e => e.Message))}"));
 			}
 
 			var updatedEntity = updateResponse?.updateResult?.EntityResults?.FirstOrDefault();
 			_logger.LogDebug($"Successfully updated entity with Id: {updatedEntity?.id.ToString() ?? "UNKNOWN!"}");
 			if (updatedEntity == null)
 			{
-				throw new AutoTaskApiException("Did not get a result back after updating the AutoTask entity.");
+				throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entity."));
 			}
 			return updatedEntity;
 		}
