@@ -105,7 +105,7 @@ namespace AutoTask.Api
 		}
 
 		private string BuildExceptionMessage(string message)
-			=> $"Message: {message}; LastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}; LastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
+			=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
 		public async Task<Entity> CreateAsync(Entity entity)
 		{
