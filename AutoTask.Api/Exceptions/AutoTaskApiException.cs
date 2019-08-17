@@ -1,16 +1,17 @@
 ﻿using AutoTask.Api.Extensions;
 using System;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace AutoTask.Api.Exceptions
 {
 	[Serializable]
 	internal class AutoTaskApiException : Exception
 	{
-		private readonly ATWSResponse _atwsResponse;
-
 		public AutoTaskApiException(ATWSResponse atwsResponse)
-			=> _atwsResponse = atwsResponse;
+			: base(atwsResponse.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and "))
+		{
+		}
 
 		public AutoTaskApiException()
 		{
@@ -24,10 +25,8 @@ namespace AutoTask.Api.Exceptions
 		{
 		}
 
-		protected AutoTaskApiException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) : base(info, context)
+		protected AutoTaskApiException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
 		}
-
-		public override string Message => _atwsResponse.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
 	}
 }
