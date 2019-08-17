@@ -1,4 +1,4 @@
-﻿using AutoTask.Api.Exceptions;
+using AutoTask.Api.Exceptions;
 using AutoTask.Api.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -133,7 +133,7 @@ namespace AutoTask.Api
 			return createdEntity;
 		}
 
-		public async Task<Entity> DeleteAsync(Entity entity)
+		public async System.Threading.Tasks.Task DeleteAsync(Entity entity)
 		{
 			var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
 			var deleteResponse = await _autoTaskClient.deleteAsync(deleteRequest).ConfigureAwait(false);
@@ -149,13 +149,11 @@ namespace AutoTask.Api
 				throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during deletion of the AutoTask entity: {string.Join(";", deleteResponse.deleteResult.Errors.Select(e => e.Message))}"));
 			}
 
-			var deletedEntity = deleteResponse?.deleteResult?.EntityResults?.FirstOrDefault();
-			_logger.LogDebug($"Successfully deleted entity with Id: {deletedEntity?.id.ToString() ?? "UNKNOWN!"}");
-			if (deletedEntity == null)
+			if (deleteResponse.deleteResult.Errors.Length != 0)
 			{
-				throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after deleting the AutoTask entity."));
+				throw new AutoTaskApiException(BuildExceptionMessage($"Received the following error(s) while deleting: {string.Join("; ", deleteResponse.deleteResult.Errors.Select(e => e.Message))}."));
 			}
-			return deletedEntity;
+			_logger.LogDebug($"Successfully deleted entity with Id: {entity?.id.ToString() ?? "UNKNOWN!"}");
 		}
 
 		public async Task<Entity> UpdateAsync(Entity entity)

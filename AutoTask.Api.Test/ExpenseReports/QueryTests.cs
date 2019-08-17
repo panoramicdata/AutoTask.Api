@@ -21,34 +21,50 @@ namespace AutoTask.Api.Test.ExpenseReports
 				{
 					Items = new List<FilterItem>
 					{
-						new FilterItem{Field = "ApprovedDate", Operator = Operator.GreaterThanOrEquals, Value = "2018-07-01" }, // Resolved
+						new FilterItem{Field = "SubmitterId", Operator = Operator.Equals, Value = "4" },
+						//new FilterItem{Field = "id", Operator = Operator.Equals, Value = "773" },
 					}
 				}
 				).ConfigureAwait(false);
 			Assert.NotNull(result);
+
+
+			await Client
+				.DeleteAsync(result[0])
+				.ConfigureAwait(false);
 		}
 
 		[Fact]
 		public async void CreateExpenseReport_Succeeds()
 		{
-			var clientPortalUsers = await AutoTaskClient.GetAsync<ClientPortalUser>(
+			var resources = await AutoTaskClient.GetAsync<Resource>(
 					new Filter
 				{
 					Items = new List<FilterItem>
 					{
 						//new FilterItem{Field = "id", Operator = Operator.Equals, Value = "5" }, // Resolved
 					}
-				}
+					}
 				).ConfigureAwait(false);
-			Assert.NotNull(clientPortalUsers);
-			Assert.NotEmpty(clientPortalUsers);
-			var user = clientPortalUsers.First();
+			Assert.NotNull(resources);
+			Assert.NotEmpty(resources);
+			var resource = resources.FirstOrDefault();// (r => (string)r.FirstName == "David" && (string)r.LastName == "Bond");
 			// We have a user
 
-			await AutoTaskClient
+			var expenseReport = new ExpenseReport
+			{
+				WeekEnding = "2019-08-31",
+				Name = "Test Expense Report ABC",
+				SubmitterID = resource.id
+			};
+
+			await Client
 				.CreateAsync(expenseReport)
 				.ConfigureAwait(false);
 
+			await Client
+				.DeleteAsync(expenseReport)
+				.ConfigureAwait(false);
 		}
 	}
 }
