@@ -17,6 +17,15 @@ namespace AutoTask.Api
 		private readonly ILogger _logger;
 		private bool disposed; // To detect redundant calls
 
+		/// <summary>
+		///	This API call executes a query against Autotask and returns an array of matching entities.
+		///	The queries are built using the QueryXML format and will return a maximum of 500 records at once,
+		///	sorted by their id value.
+		///	To query for additional records over the 500 maximum for a given set of search criteria, repeat
+		///	the query and filter by id value > the previous maximum id value retrieved.
+		/// </summary>
+		private const int AutoTaskPageSize = 500;
+
 		public Client(string username, string password, ILogger logger = null)
 		{
 			_logger = logger ?? new NullLogger<Client>();
@@ -86,6 +95,11 @@ namespace AutoTask.Api
 		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
 			=> await _autoTaskClient.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType)).ConfigureAwait(false);
 
+		/// <summary>
+		/// Use GetAllAsync if you want to auto-page more than 500 results
+		/// </summary>
+		/// <param name="sXml"></param>
+		/// <returns></returns>
 		public async Task<IEnumerable<Entity>> QueryAsync(string sXml)
 		{
 			// this example will not handle the 500 results limitation.
@@ -102,6 +116,33 @@ namespace AutoTask.Api
 			// Executed fine
 
 			return atwsResponse.queryResult.EntityResults;
+		}
+
+		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml)
+		{
+			List<Entity> list = new List<Entity>();
+
+			var amendedSxml = sXml;
+			queryResponse atwsResponse;
+			do
+			{
+				atwsResponse = await _autoTaskClient.queryAsync(new queryRequest(_autotaskIntegrations, amendedSxml)).ConfigureAwait(false);
+				if (atwsResponse.queryResult.ReturnCode != 1)
+				{
+					throw new AutoTaskApiException(atwsResponse.queryResult);
+				}
+				// Executed fine
+
+				list.AddRange(atwsResponse.queryResult.EntityResults);
+
+				// We MAY have more data
+				// Determine the max id from the last page
+				var lastId = atwsResponse.queryResult.EntityResults.Last().id;
+				// Amend the sXml
+				amendedSxml = sXml.Replace("</query>", $"<condition operator=\"and\"><field>id<expression op=\"GreaterThan\">{lastId}</expression></field></condition></query>");
+			} while (atwsResponse.queryResult.EntityResults.Length == AutoTaskPageSize);
+
+			return list;
 		}
 
 		public async Task<Entity> CreateAsync(Entity entity)

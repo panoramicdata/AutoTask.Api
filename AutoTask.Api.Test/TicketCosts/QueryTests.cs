@@ -65,7 +65,6 @@ namespace AutoTask.Api.Test.TicketCosts
 				.ConfigureAwait(false);
 		}
 
-
 		[Fact]
 		public async void AutoTaskClientTicketCost_Query()
 		{
@@ -78,6 +77,14 @@ namespace AutoTask.Api.Test.TicketCosts
 					}
 				}
 				).ConfigureAwait(false);
+			Assert.NotNull(result);
+			Assert.NotEmpty(result);
+		}
+
+		[Fact]
+		public async void AutoTaskClientTicketCost_GetAllAsync()
+		{
+			var result = await Client.GetAllAsync("<queryxml><entity>TicketCost</entity><query><condition operator=\"and\"><field>CreateDate<expression op=\"greaterthan\">2000-01-01</expression></field></condition></query></queryxml>").ConfigureAwait(false);
 			Assert.NotNull(result);
 			Assert.NotEmpty(result);
 		}
