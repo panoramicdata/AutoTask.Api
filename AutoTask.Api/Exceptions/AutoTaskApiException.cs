@@ -1,6 +1,4 @@
-﻿using AutoTask.Api.Extensions;
-using System;
-using System.Linq;
+﻿using System;
 using System.Runtime.Serialization;
 
 namespace AutoTask.Api.Exceptions
@@ -8,11 +6,6 @@ namespace AutoTask.Api.Exceptions
 	[Serializable]
 	internal class AutoTaskApiException : Exception
 	{
-		public AutoTaskApiException(ATWSResponse atwsResponse)
-			: base(atwsResponse.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and "))
-		{
-		}
-
 		public AutoTaskApiException()
 		{
 		}

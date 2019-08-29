@@ -60,33 +60,37 @@ namespace AutoTask.Api.Test.TicketCosts
 				.CreateAsync(ticketCost)
 				.ConfigureAwait(false);
 
-			await Client
-				.DeleteAsync(createdTicketCost)
-				.ConfigureAwait(false);
-		}
-
-		[Fact]
-		public async void AutoTaskClientTicketCost_Query()
-		{
+			// Assert that there is a ticketcost assigned
 			var result = await AutoTaskClient.GetAsync<TicketCost>(
 				new Filter
 				{
 					Items = new List<FilterItem>
 					{
-						new FilterItem{Field = "createdate", Operator = Operator.GreaterThanOrEquals, Value = "2019-08-14 00:00:00" }, // Resolved
+						new FilterItem{Field = "id", Operator = Operator.Equals, Value = createdTicketCost.id.ToString() },
 					}
 				}
 				).ConfigureAwait(false);
 			Assert.NotNull(result);
 			Assert.NotEmpty(result);
-		}
 
-		[Fact]
-		public async void AutoTaskClientTicketCost_GetAllAsync()
-		{
-			var result = await Client.GetAllAsync("<queryxml><entity>TicketCost</entity><query><condition operator=\"and\"><field>CreateDate<expression op=\"greaterthan\">2000-01-01</expression></field></condition></query></queryxml>").ConfigureAwait(false);
-			Assert.NotNull(result);
-			Assert.NotEmpty(result);
+			// Delete the ticket cost
+			await Client
+				.DeleteAsync(createdTicketCost)
+				.ConfigureAwait(false);
+
+
+			// Assert that there is now NO ticketcost assigned
+			var ticketCostMissingResult = await AutoTaskClient.GetAsync<TicketCost>(
+				new Filter
+				{
+					Items = new List<FilterItem>
+					{
+						new FilterItem{Field = "id", Operator = Operator.Equals, Value = createdTicketCost.id.ToString() },
+					}
+				}
+				).ConfigureAwait(false);
+			Assert.NotNull(ticketCostMissingResult);
+			Assert.Empty(ticketCostMissingResult);
 		}
 	}
 }

@@ -13,6 +13,9 @@ namespace AutoTask.Api
 	{
 		private readonly ILogger _logger;
 
+		internal string LastResponse { get; private set; }
+		internal string LastRequest { get; private set; }
+
 		public AutoTaskLogger(ILogger logger)
 			=> _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
 
@@ -28,11 +31,17 @@ namespace AutoTask.Api
 
 		// IClientMessageInspector
 		public void AfterReceiveReply(ref Message reply, object correlationState)
-			=> _logger.LogDebug("AutoTask Response: " + reply.ToString());
+		{
+			LastResponse = reply.ToString();
+			_logger.LogDebug("AutoTask Response: " + LastResponse);
+		}
 
 		public object BeforeSendRequest(ref Message request, IClientChannel channel)
 		{
-			_logger.LogDebug("AutoTask Request: " + request.ToString());
+			LastRequest = request.ToString();
+			// Clear the response so it's clear that any response set is the response to the request
+			LastResponse = null;
+			_logger.LogDebug("AutoTask Request: " + LastRequest);
 			return null;
 		}
 	}
