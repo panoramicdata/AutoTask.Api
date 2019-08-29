@@ -78,7 +78,6 @@ namespace AutoTask.Api.Test.TicketCosts
 				.DeleteAsync(createdTicketCost)
 				.ConfigureAwait(false);
 
-
 			// Assert that there is now NO ticketcost assigned
 			var ticketCostMissingResult = await AutoTaskClient.GetAsync<TicketCost>(
 				new Filter

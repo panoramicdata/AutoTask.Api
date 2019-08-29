@@ -129,7 +129,9 @@ namespace AutoTask.Api
 				atwsResponse = await _autoTaskClient.queryAsync(new queryRequest(_autotaskIntegrations, amendedSxml)).ConfigureAwait(false);
 				if (atwsResponse.queryResult.ReturnCode != 1)
 				{
-					throw new AutoTaskApiException(atwsResponse.queryResult);
+					var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
+
+					throw new AutoTaskApiException(BuildExceptionMessage(message));
 				}
 				// Executed fine
 
