@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace AutoTask.Api
 {
-	public class Client : IDisposable
+	public class Client : IDisposable, IClient
 	{
 		private readonly ATWSSoapClient _autoTaskClient;
 
