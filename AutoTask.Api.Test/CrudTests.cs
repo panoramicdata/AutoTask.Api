@@ -84,5 +84,11 @@ namespace AutoTask.Api.Test
 			tickets.Should().BeEmpty();
 			// Ticket no longer exists and was deleted
 		}
+
+		[Fact]
+		public async void QueryTest()
+		{
+			var _ = await Client.GetAllAsync(@"<queryxml><entity>ProjectCost</entity><query><condition operator=""and""><field>Description<expression op=""BeginsWith"">Certify:</expression></field><field>CreateDate<expression op=""greaterthan"">2019-07-22 18:49:01</expression></field></condition></query></queryxml>").ConfigureAwait(false);
+		}
 	}
 }

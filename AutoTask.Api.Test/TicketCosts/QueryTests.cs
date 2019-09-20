@@ -91,6 +91,7 @@ namespace AutoTask.Api.Test.TicketCosts
 			Assert.NotNull(ticketCostMissingResult);
 			Assert.Empty(ticketCostMissingResult);
 		}
+
 		[Fact]
 		public async void AutoTaskClientTicketCost_GetAllAsync()
 		{

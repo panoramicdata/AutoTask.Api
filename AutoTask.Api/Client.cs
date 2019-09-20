@@ -139,7 +139,12 @@ namespace AutoTask.Api
 
 				// We MAY have more data
 				// Determine the max id from the last page
-				var lastId = atwsResponse.queryResult.EntityResults.Last().id;
+				var last = atwsResponse.queryResult.EntityResults.LastOrDefault();
+				if(last == null)
+				{
+					break;
+				}
+				var lastId = last.id;
 				// Amend the sXml
 				amendedSxml = sXml.Replace("</query>", $"<condition operator=\"and\"><field>id<expression op=\"GreaterThan\">{lastId}</expression></field></condition></query>");
 			} while (atwsResponse.queryResult.EntityResults.Length == AutoTaskPageSize);
@@ -238,15 +243,15 @@ namespace AutoTask.Api
 					{
 						_autoTaskClient.Close();
 					}
-					catch (CommunicationException e)
+					catch (CommunicationException)
 					{
 						_autoTaskClient.Abort();
 					}
-					catch (TimeoutException e)
+					catch (TimeoutException)
 					{
 						_autoTaskClient.Abort();
 					}
-					catch (Exception e)
+					catch
 					{
 						_autoTaskClient.Abort();
 						throw;

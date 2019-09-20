@@ -28,7 +28,7 @@ namespace AutoTask.Api.Test.ExpenseReports
 			Assert.NotNull(result);
 		}
 
-		/// Can't delete ExpenseReports so only run this if there's an issue
+		// Can't delete ExpenseReports so only run this if there's an issue
 
 		//[Fact]
 		//public async void CreateExpenseReport_Succeeds()
