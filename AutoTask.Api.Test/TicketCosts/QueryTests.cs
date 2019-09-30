@@ -1,4 +1,5 @@
 ﻿using AutoTask.Api.Filters;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace AutoTask.Api.Test.TicketCosts
 {
 	public class QueryTests : TestWithOutput
 	{
-		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
+		public QueryTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
 		{
 		}
 

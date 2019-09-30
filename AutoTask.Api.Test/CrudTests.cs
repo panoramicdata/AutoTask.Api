@@ -1,11 +1,12 @@
-﻿using Xunit;
+﻿using Microsoft.Extensions.Logging;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace AutoTask.Api.Test
 {
 	public class CrudTests : TestWithOutput
 	{
-		public CrudTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
+		public CrudTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
 		{
 		}
 

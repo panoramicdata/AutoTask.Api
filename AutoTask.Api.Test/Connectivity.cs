@@ -1,4 +1,5 @@
 using AutoTask.Api.Filters;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
@@ -7,7 +8,7 @@ namespace AutoTask.Api.Test
 {
 	public class Connectivity : TestWithOutput
 	{
-		public Connectivity(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
+		public Connectivity(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
 		{
 		}
 

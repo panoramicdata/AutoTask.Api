@@ -1,4 +1,5 @@
 ﻿using AutoTask.Api.Filters;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,7 +9,7 @@ namespace AutoTask.Api.Test.Currencies
 {
 	public class QueryTests : TestWithOutput
 	{
-		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
+		public QueryTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
 		{
 		}
 
