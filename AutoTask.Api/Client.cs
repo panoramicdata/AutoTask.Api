@@ -30,7 +30,7 @@ namespace AutoTask.Api
 		/// </summary>
 		private const int AutoTaskPageSize = 500;
 
-		public Client(string username, string password, ILogger logger = null)
+		public Client(string username, string password, string integrationCode = null, ILogger logger = null)
 		{
 			_logger = logger ?? new NullLogger<Client>();
 			var binding = new BasicHttpBinding
@@ -86,8 +86,10 @@ namespace AutoTask.Api
 			_autoTaskClient.ClientCredentials.UserName.UserName = username;
 			_autoTaskClient.ClientCredentials.UserName.Password = password;
 
-			// have no clue what this does.
-			_autotaskIntegrations = new AutotaskIntegrations();
+			//Autotask is implementing mandatory tracking identifiers for 
+			//Integration developers selling or offering integrations into the Autotask channel.
+
+			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
 		}
 
 		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
@@ -140,7 +142,7 @@ namespace AutoTask.Api
 				// We MAY have more data
 				// Determine the max id from the last page
 				var last = atwsResponse.queryResult.EntityResults.LastOrDefault();
-				if(last == null)
+				if (last == null)
 				{
 					break;
 				}
