@@ -6,7 +6,7 @@ namespace AutoTask.Api.Test
 {
 	public class CrudTests : TestWithOutput
 	{
-		public CrudTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
+		public CrudTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 		{
 		}
 

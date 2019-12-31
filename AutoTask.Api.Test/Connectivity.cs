@@ -8,7 +8,7 @@ namespace AutoTask.Api.Test
 {
 	public class Connectivity : TestWithOutput
 	{
-		public Connectivity(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
+		public Connectivity(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 		{
 		}
 

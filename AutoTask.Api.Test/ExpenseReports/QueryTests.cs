@@ -9,7 +9,7 @@ namespace AutoTask.Api.Test.ExpenseReports
 {
 	public class QueryTests : TestWithOutput
 	{
-		public QueryTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
+		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 		{
 		}
 

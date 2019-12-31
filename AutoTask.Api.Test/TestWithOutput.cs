@@ -15,10 +15,10 @@ namespace AutoTask.Api.Test
 {
 	public class TestWithOutput
 	{
-		protected TestWithOutput(ITestOutputHelper iTestOutputHelper, ILogger logger)
+		protected TestWithOutput(ITestOutputHelper iTestOutputHelper)
 		{
 			ITestOutputHelper = iTestOutputHelper;
-			Logger = logger;
+			//Logger = logger;
 			var nowUtc = DateTimeOffset.UtcNow;
 			StartEpoch = nowUtc.AddDays(-30).ToUnixTimeSeconds();
 			EndEpoch = nowUtc.ToUnixTimeSeconds();
@@ -27,8 +27,8 @@ namespace AutoTask.Api.Test
 			Client = new Client(
 				autoTaskCredentials.Username,
 				autoTaskCredentials.Password,
-				autoTaskCredentials.IntegrationCode,
-				logger);
+				autoTaskCredentials.IntegrationCode
+				);
 			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration { Username = autoTaskCredentials.Username, Password = autoTaskCredentials.Password });
 			Stopwatch = Stopwatch.StartNew();
 		}
@@ -56,7 +56,7 @@ namespace AutoTask.Api.Test
 			return configuration;
 		}
 
-		protected ILogger Logger { get; }
+		//protected ILogger Logger { get; }
 
 		protected ITestOutputHelper ITestOutputHelper { get; }
 

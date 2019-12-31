@@ -11,7 +11,7 @@ namespace AutoTask.Api.Test.TicketCosts
 {
 	public class QueryTests : TestWithOutput
 	{
-		public QueryTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
+		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 		{
 		}
 
