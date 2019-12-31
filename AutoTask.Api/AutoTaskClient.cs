@@ -60,7 +60,7 @@ namespace AutoTask.Api
 			//Autotask is implementing mandatory tracking identifiers for 
 			//Integration developers selling or offering integrations into the Autotask channel.
 
-			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = _configuration.IntegrationCode };
+			_autotaskIntegrations = new AutotaskIntegrations {IntegrationCode = _configuration.IntegrationCode};
 			return _clientDoNotUseDirectly = client;
 		}
 

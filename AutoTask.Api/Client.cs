@@ -30,7 +30,7 @@ namespace AutoTask.Api
 		/// </summary>
 		private const int AutoTaskPageSize = 500;
 
-		public Client(string username, string password, string integrationCode = null, ILogger logger = null)
+		public Client(string username, string password, string integrationCode = default, ILogger logger = null)
 		{
 			_logger = logger ?? new NullLogger<Client>();
 			var binding = new BasicHttpBinding
@@ -90,6 +90,7 @@ namespace AutoTask.Api
 			//Integration developers selling or offering integrations into the Autotask channel.
 
 			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
+
 		}
 
 		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
