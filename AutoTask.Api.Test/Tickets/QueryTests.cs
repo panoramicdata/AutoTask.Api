@@ -1,5 +1,4 @@
 ﻿using AutoTask.Api.Filters;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,7 +7,7 @@ namespace AutoTask.Api.Test.Tickets
 {
 	public class QueryTests : TestWithOutput
 	{
-		public QueryTests(ITestOutputHelper iTestOutputHelper, ILogger logger) : base(iTestOutputHelper, logger)
+		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 		{
 		}
 

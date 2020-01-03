@@ -30,9 +30,31 @@ namespace AutoTask.Api
 		/// </summary>
 		private const int AutoTaskPageSize = 500;
 
-		public Client(string username, string password, string integrationCode = default, ILogger logger = null)
+		public Client(
+			string username,
+			string password,
+			ILogger logger = default)
 		{
 			_logger = logger ?? new NullLogger<Client>();
+			AutoTaskLogger = new AutoTaskLogger(_logger);
+			_autoTaskClient = GetATWSSoapClient(username, password);
+			_autotaskIntegrations = new AutotaskIntegrations();
+		}
+
+		public Client(
+			string username,
+			string password,
+			string integrationCode = default,
+			ILogger logger = default)
+		{
+			_logger = logger ?? new NullLogger<Client>();
+			AutoTaskLogger = new AutoTaskLogger(_logger);
+			_autoTaskClient = GetATWSSoapClient(username, password);
+			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
+		}
+
+		private ATWSSoapClient GetATWSSoapClient(string username, string password)
+		{
 			var binding = new BasicHttpBinding
 			{
 				SendTimeout = new TimeSpan(0, 0, 0, 0, 100000),
@@ -55,8 +77,9 @@ namespace AutoTask.Api
 				}
 			};
 			var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.5/atws.asmx");
-			_autoTaskClient = new ATWSSoapClient(binding, endpoint);
-			var zoneInfo = _autoTaskClient.getZoneInfoAsync(new getZoneInfoRequest(username)).GetAwaiter().GetResult();
+			var autoTaskClient = new ATWSSoapClient(binding, endpoint);
+
+			var zoneInfo = autoTaskClient.getZoneInfoAsync(new getZoneInfoRequest(username)).GetAwaiter().GetResult();
 
 			// Create the binding.
 			// must use BasicHttpBinding instead of WSHttpBinding
@@ -66,7 +89,7 @@ namespace AutoTask.Api
 				Security =
 				{
 					Mode = BasicHttpSecurityMode.Transport,
-					Transport = {ClientCredentialType = HttpClientCredentialType.Basic}
+					Transport = { ClientCredentialType = HttpClientCredentialType.Basic }
 				},
 				MaxReceivedMessageSize = 2147483647
 			};
@@ -77,20 +100,13 @@ namespace AutoTask.Api
 			// Create the endpoint address.
 			var ea = new EndpointAddress(zoneInfo.getZoneInfoResult.URL);
 
-			_autoTaskClient.Close();
-			_autoTaskClient = new ATWSSoapClient(myBinding, ea);
+			autoTaskClient.Close();
 
-			AutoTaskLogger = new AutoTaskLogger(_logger);
-			_autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
-
-			_autoTaskClient.ClientCredentials.UserName.UserName = username;
-			_autoTaskClient.ClientCredentials.UserName.Password = password;
-
-			//Autotask is implementing mandatory tracking identifiers for 
-			//Integration developers selling or offering integrations into the Autotask channel.
-
-			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
-
+			autoTaskClient = new ATWSSoapClient(myBinding, ea);
+			autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
+			autoTaskClient.ClientCredentials.UserName.UserName = username;
+			autoTaskClient.ClientCredentials.UserName.Password = password;
+			return autoTaskClient;
 		}
 
 		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)

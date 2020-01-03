@@ -15,10 +15,9 @@ namespace AutoTask.Api.Test
 {
 	public class TestWithOutput
 	{
-		protected TestWithOutput(ITestOutputHelper iTestOutputHelper, ILogger logger)
+		protected TestWithOutput(ITestOutputHelper iTestOutputHelper)
 		{
-			ITestOutputHelper = iTestOutputHelper;
-			Logger = logger;
+			Logger = new XunitLogger(iTestOutputHelper);
 			var nowUtc = DateTimeOffset.UtcNow;
 			StartEpoch = nowUtc.AddDays(-30).ToUnixTimeSeconds();
 			EndEpoch = nowUtc.ToUnixTimeSeconds();
@@ -28,7 +27,7 @@ namespace AutoTask.Api.Test
 				autoTaskCredentials.Username,
 				autoTaskCredentials.Password,
 				autoTaskCredentials.IntegrationCode,
-				logger
+				Logger
 				);
 			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration { Username = autoTaskCredentials.Username, Password = autoTaskCredentials.Password });
 			Stopwatch = Stopwatch.StartNew();
@@ -59,13 +58,14 @@ namespace AutoTask.Api.Test
 
 		protected ILogger Logger { get; }
 
-		protected ITestOutputHelper ITestOutputHelper { get; }
-
 		private Stopwatch Stopwatch { get; }
 
 		protected long StartEpoch { get; }
+
 		protected long EndEpoch { get; }
+
 		protected Client Client { get; }
+
 		protected AutoTaskClient AutoTaskClient { get; }
 
 		protected void AssertIsFast(int durationSeconds) => Assert.InRange(Stopwatch.ElapsedMilliseconds, 0, durationSeconds * 1000);

@@ -6,6 +6,5 @@
 		public string Password { get; set; }
 		public string IntegrationCode { get; set; }
 		public string IssueProblemSignatureField { get; set; } = "2";
-
 	}
 }
