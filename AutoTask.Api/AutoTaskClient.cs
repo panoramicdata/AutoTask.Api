@@ -57,8 +57,10 @@ namespace AutoTask.Api
 			client.ClientCredentials.UserName.UserName = _configuration.Username;
 			client.ClientCredentials.UserName.Password = _configuration.Password;
 
-			// Have no clue what this does.
-			_autotaskIntegrations = new AutotaskIntegrations();
+			//Autotask is implementing mandatory tracking identifiers for 
+			//Integration developers selling or offering integrations into the Autotask channel.
+
+			_autotaskIntegrations = new AutotaskIntegrations {IntegrationCode = _configuration.IntegrationCode};
 			return _clientDoNotUseDirectly = client;
 		}
 

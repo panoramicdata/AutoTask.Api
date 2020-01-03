@@ -27,7 +27,9 @@ namespace AutoTask.Api.Test
 			Client = new Client(
 				autoTaskCredentials.Username,
 				autoTaskCredentials.Password,
-				logger);
+				autoTaskCredentials.IntegrationCode,
+				logger
+				);
 			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration { Username = autoTaskCredentials.Username, Password = autoTaskCredentials.Password });
 			Stopwatch = Stopwatch.StartNew();
 		}
