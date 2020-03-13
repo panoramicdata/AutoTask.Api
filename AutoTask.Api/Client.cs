@@ -33,7 +33,7 @@ namespace AutoTask.Api
 		public Client(
 			string username,
 			string password,
-			ILogger logger = default)
+			ILogger? logger = default)
 		{
 			_logger = logger ?? new NullLogger<Client>();
 			AutoTaskLogger = new AutoTaskLogger(_logger);
@@ -44,8 +44,8 @@ namespace AutoTask.Api
 		public Client(
 			string username,
 			string password,
-			string integrationCode = default,
-			ILogger logger = default)
+			string? integrationCode = default,
+			ILogger? logger = default)
 		{
 			_logger = logger ?? new NullLogger<Client>();
 			AutoTaskLogger = new AutoTaskLogger(_logger);
