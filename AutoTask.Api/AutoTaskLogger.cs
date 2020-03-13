@@ -17,7 +17,9 @@ namespace AutoTask.Api
 		internal string LastRequest { get; private set; }
 
 		public AutoTaskLogger(ILogger logger)
-			=> _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
+		{
+			_logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
+		}
 
 		// IEndpointBehavior
 		public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters) { }

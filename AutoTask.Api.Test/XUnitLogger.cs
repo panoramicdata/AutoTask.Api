@@ -14,19 +14,13 @@ namespace AutoTask.Api.Test
 		}
 
 		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-		{
-			_output.WriteLine(state.ToString());
-		}
+			=> _output.WriteLine(state.ToString());
 
 		public bool IsEnabled(LogLevel logLevel)
-		{
-			return true;
-		}
+			=> true;
 
 		public IDisposable BeginScope<TState>(TState state)
-		{
-			return this;
-		}
+			=> this;
 
 		public void Dispose()
 		{

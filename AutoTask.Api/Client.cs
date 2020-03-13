@@ -139,7 +139,7 @@ namespace AutoTask.Api
 
 		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml)
 		{
-			List<Entity> list = new List<Entity>();
+			var list = new List<Entity>();
 
 			var amendedSxml = sXml;
 			queryResponse atwsResponse;
