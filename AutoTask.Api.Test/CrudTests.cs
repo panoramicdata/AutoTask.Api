@@ -1,4 +1,5 @@
 ﻿using PanoramicData.SheetMagic;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -94,19 +95,26 @@ namespace AutoTask.Api.Test
 		[Fact]
 		public async void TaskTimeEntry()
 		{
-			var timeEntries = (await Client.GetAllAsync(@"<queryxml><entity>TimeEntry</entity><query><condition operator=""and""><field>StartDateTime<expression op=""greaterthan"">2019-09-01 00:00:00</expression></field><field>StartDateTime<expression op=""lessthan"">2019-10-01 00:00:00</expression></field></condition></query></queryxml>").ConfigureAwait(false))
+			var startDate = DateTime.UtcNow.AddMonths(-1);
+			var endDate = DateTime.UtcNow;
+			var timeEntriesResponse = await Client.GetAllAsync(@"<queryxml><entity>TimeEntry</entity><query><condition operator=""and""><field>StartDateTime<expression op=""greaterthan"">" + startDate.ToString("yyyy-MM-dd") + @" 00:00:00</expression></field><field>StartDateTime<expression op=""lessthan"">" + endDate.ToString("yyyy-MM-dd") + " 00:00:00</expression></field></condition></query></queryxml>").ConfigureAwait(false);
+			var timeEntries = timeEntriesResponse
 				.Cast<TimeEntry>()
 				.ToList();
-			var resources = (await Client.GetAllAsync(@"<queryxml><entity>Resource</entity><query><condition operator=""and""><field>id<expression op=""greaterthan"">-1</expression></field></condition></query></queryxml>").ConfigureAwait(false))
+			var resourcesResponse = await Client.GetAllAsync(@"<queryxml><entity>Resource</entity><query><condition operator=""and""><field>id<expression op=""greaterthan"">-1</expression></field></condition></query></queryxml>").ConfigureAwait(false);
+			var resources = resourcesResponse
 				.Cast<Resource>()
 				.ToList();
-			var timeEntryModels = timeEntries.Select(timeEntry => new TimeEntryModel
-			{
-				ResourceName = resources.SingleOrDefault(r => r.id == (int)timeEntry.ResourceID)?.UserName.ToString() ?? "Unknown",
-				TicketId = timeEntry.TicketID.ToString(),
-				Hours = (decimal)timeEntry.HoursWorked,
-				WorkType = timeEntry.Type.ToString()
-			})
+			var timeEntryModels = timeEntries
+				.Select(timeEntry =>
+					new TimeEntryModel
+					{
+						ResourceName = resources.SingleOrDefault(r => r.id == (int)timeEntry.ResourceID)?.UserName.ToString() ?? "Unknown",
+						TicketId = timeEntry.TicketID?.ToString() ?? "Unknown",
+						Hours = timeEntry.HoursWorked as decimal? ?? 0,
+						WorkType = timeEntry.Type?.ToString() ?? "Unknown"
+					}
+				)
 				.ToList();
 
 			var cache = new Dictionary<string, Ticket>();

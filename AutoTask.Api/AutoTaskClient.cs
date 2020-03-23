@@ -1,4 +1,5 @@
 ﻿using AutoTask.Api.Config;
+using AutoTask.Api.Exceptions;
 using AutoTask.Api.Filters;
 using LogicMonitor.Integrator.Alerts.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -27,6 +28,7 @@ namespace AutoTask.Api
 
 		public AutoTaskClient(AutoTaskConfiguration config)
 		{
+			config.Validate();
 			_configuration = config;
 		}
 
@@ -59,10 +61,10 @@ namespace AutoTask.Api
 			client.ClientCredentials.UserName.UserName = _configuration.Username;
 			client.ClientCredentials.UserName.Password = _configuration.Password;
 
-			//Autotask is implementing mandatory tracking identifiers for 
+			//Autotask is implementing mandatory tracking identifiers for
 			//Integration developers selling or offering integrations into the Autotask channel.
 
-			_autotaskIntegrations = new AutotaskIntegrations {IntegrationCode = _configuration.IntegrationCode};
+			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = _configuration.IntegrationCode };
 			return _clientDoNotUseDirectly = client;
 		}
 
@@ -113,6 +115,10 @@ namespace AutoTask.Api
 			var query = GetQueryString(filter);
 			var sXml = $"<queryxml><entity>{typeof(T).Name}</entity><query>{query}</query></queryxml>";
 			var queryResponse = await QueryAsync(sXml).ConfigureAwait(false);
+			if (queryResponse.queryResult.Errors.Length > 0)
+			{
+				throw new AutoTaskApiException(queryResponse.queryResult);
+			}
 			return queryResponse.queryResult.EntityResults.Cast<T>().ToList();
 		}
 

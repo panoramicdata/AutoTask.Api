@@ -1,9 +1,9 @@
 ﻿{
   "ProviderId": "Microsoft.VisualStudio.ConnectedService.Wcf",
-  "Version": "15.0.30311.775",
+  "Version": "15.0.40203.910",
   "ExtendedData": {
     "inputs": [
-      "https://webservices1.autotask.net/ATServices/1.5/atws.wsdl"
+      "https://webservices1.autotask.net/ATServices/1.6/atws.wsdl"
     ],
     "collectionTypes": [
       "System.Collections.Generic.Dictionary`2",

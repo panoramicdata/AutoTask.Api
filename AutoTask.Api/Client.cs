@@ -33,18 +33,7 @@ namespace AutoTask.Api
 		public Client(
 			string username,
 			string password,
-			ILogger? logger = default)
-		{
-			_logger = logger ?? new NullLogger<Client>();
-			AutoTaskLogger = new AutoTaskLogger(_logger);
-			_autoTaskClient = GetATWSSoapClient(username, password);
-			_autotaskIntegrations = new AutotaskIntegrations();
-		}
-
-		public Client(
-			string username,
-			string password,
-			string? integrationCode = default,
+			string integrationCode,
 			ILogger? logger = default)
 		{
 			_logger = logger ?? new NullLogger<Client>();
@@ -76,7 +65,7 @@ namespace AutoTask.Api
 					}
 				}
 			};
-			var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.5/atws.asmx");
+			var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.6/atws.asmx");
 			var autoTaskClient = new ATWSSoapClient(binding, endpoint);
 
 			var zoneInfo = autoTaskClient.getZoneInfoAsync(new getZoneInfoRequest(username)).GetAwaiter().GetResult();

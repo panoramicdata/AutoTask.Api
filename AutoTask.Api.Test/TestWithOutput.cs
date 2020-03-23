@@ -29,7 +29,12 @@ namespace AutoTask.Api.Test
 				autoTaskCredentials.IntegrationCode,
 				Logger
 				);
-			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration { Username = autoTaskCredentials.Username, Password = autoTaskCredentials.Password });
+			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration
+			{
+				Username = autoTaskCredentials.Username,
+				Password = autoTaskCredentials.Password,
+				IntegrationCode = autoTaskCredentials.IntegrationCode
+			});
 			Stopwatch = Stopwatch.StartNew();
 		}
 
