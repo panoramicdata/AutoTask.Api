@@ -11,7 +11,7 @@
 		<RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>AutoTask API</PackageTags>
-		<PackageReleaseNotes>Added support for API v1.6 - IntegrationCode is now required with credentials.</PackageReleaseNotes>
+		<PackageReleaseNotes>Response content now logged at trace instead of debug.</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Company>Panoramic Data Limited</Company>

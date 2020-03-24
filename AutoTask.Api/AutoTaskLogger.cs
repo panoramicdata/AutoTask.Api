@@ -35,7 +35,7 @@ namespace AutoTask.Api
 		public void AfterReceiveReply(ref Message reply, object correlationState)
 		{
 			LastResponse = reply.ToString();
-			_logger.LogDebug("AutoTask Response: " + LastResponse);
+			_logger.LogTrace("AutoTask Response: " + LastResponse);
 		}
 
 		public object? BeforeSendRequest(ref Message request, IClientChannel channel)
