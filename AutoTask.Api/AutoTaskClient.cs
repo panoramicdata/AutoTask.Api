@@ -18,8 +18,8 @@ namespace AutoTask.Api
 	{
 		private const string UDFPrefix = "UDF ";
 		private readonly AutoTaskConfiguration _configuration;
-		private ATWSSoapClient _clientDoNotUseDirectly;
-		private AutotaskIntegrations _autotaskIntegrations;
+		private ATWSSoapClient? _clientDoNotUseDirectly;
+		private AutotaskIntegrations? _autotaskIntegrations;
 
 		public string PrimaryKey => "id";
 		public string NumberField => "TicketNumber";
@@ -30,6 +30,8 @@ namespace AutoTask.Api
 		{
 			config.Validate();
 			_configuration = config;
+			_clientDoNotUseDirectly = null;
+			_autotaskIntegrations = null;
 		}
 
 		private async Task<ATWSSoap> GetClientAsync()

@@ -1,4 +1,5 @@
-﻿using PanoramicData.SheetMagic;
+﻿using FluentAssertions;
+using PanoramicData.SheetMagic;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -121,6 +122,7 @@ namespace AutoTask.Api.Test
 			var a = 1;
 			foreach (var timeEntryModel in timeEntryModels)
 			{
+				timeEntryModel.TicketId.Should().NotBeNullOrEmpty();
 				timeEntryModel.SubIssue = (await GetSubIssueTypeByTicketIdAsync(timeEntryModel.TicketId, cache).ConfigureAwait(false)).SubIssueType?.ToString() ?? "None";
 				a++;
 			}
