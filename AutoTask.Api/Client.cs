@@ -213,8 +213,11 @@ namespace AutoTask.Api
 		}
 
 		public async Task<Entity> UpdateAsync(Entity entity)
+		=> (await UpdateAsync(new[] { entity }).ConfigureAwait(false)).Single();
+
+		public async Task<Entity[]> UpdateAsync(Entity[] entityArray)
 		{
-			var updateRequest = new updateRequest(_autotaskIntegrations, new[] { entity });
+			var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
 			var updateResponse = await _autoTaskClient.updateAsync(updateRequest).ConfigureAwait(false);
 			var errorCount = updateResponse.updateResult.Errors.Length;
 			if (errorCount > 0)
@@ -224,17 +227,21 @@ namespace AutoTask.Api
 				{
 					_logger.LogError($"Error {errorNum + 1}: {updateResponse.updateResult.Errors[errorNum].Message}");
 				}
-				_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
+				_logger.LogError("Entity: " + JsonConvert.SerializeObject(entityArray));
 				throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during update of the AutoTask entity: {string.Join(";", updateResponse.updateResult.Errors.Select(e => e.Message))}"));
 			}
 
-			var updatedEntity = updateResponse?.updateResult?.EntityResults?.FirstOrDefault();
-			_logger.LogDebug($"Successfully updated entity with Id: {updatedEntity?.id.ToString() ?? "UNKNOWN!"}");
-			if (updatedEntity == null)
+			var updatedEntities = updateResponse?.updateResult?.EntityResults;
+			if (updatedEntities is null)
 			{
-				throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entity."));
+				throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entities."));
 			}
-			return updatedEntity;
+			if (entityArray.Length != updatedEntities.Length)
+			{
+				throw new AutoTaskApiException(BuildExceptionMessage($"Did not receive the expected update entity count (expected {entityArray.Length}, received {updatedEntities.Length})."));
+			}
+			_logger.LogDebug($"Updated {updatedEntities.Length} {(updatedEntities.Length == 1 ? "entity" : "entities")}: ({string.Join(", ", updatedEntities.Select(e => e.id.ToString() ?? "?"))})");
+			return updatedEntities;
 		}
 
 		public async Task<string> GetWsdlVersion() => (await _autoTaskClient.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations)).ConfigureAwait(false)).GetWsdlVersionResult;

@@ -11,7 +11,7 @@
 		<RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>AutoTask API</PackageTags>
-		<PackageReleaseNotes>Response content now logged at trace instead of debug.</PackageReleaseNotes>
+		<PackageReleaseNotes>Added Client.UpdateAsync(Entity[] entities)</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Company>Panoramic Data Limited</Company>
