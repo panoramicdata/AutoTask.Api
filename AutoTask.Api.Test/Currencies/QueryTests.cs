@@ -15,7 +15,6 @@ namespace AutoTask.Api.Test.Currencies
 		[Fact]
 		public async void AutoTaskClientCurrency_Query()
 		{
-			// TODO - Detect the system has multi-currency enabled
 			var result = await AutoTaskClient.GetAsync<Currency>(
 				new Filter
 				{

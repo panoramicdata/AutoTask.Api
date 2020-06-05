@@ -11,7 +11,7 @@
 		<RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>AutoTask API</PackageTags>
-		<PackageReleaseNotes>Added Client.UpdateAsync(Entity[] entities)</PackageReleaseNotes>
+		<PackageReleaseNotes>Added the use of cancellation tokens to avoid waiting for long-running queries.</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Company>Panoramic Data Limited</Company>

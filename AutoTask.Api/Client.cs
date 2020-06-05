@@ -7,20 +7,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutoTask.Api
 {
 	public class Client : IDisposable, IClient
 	{
-		private readonly ATWSSoapClient _autoTaskClient;
-
-		internal AutoTaskLogger AutoTaskLogger { get; }
-
-		private readonly AutotaskIntegrations _autotaskIntegrations;
-		private readonly ILogger _logger;
-		private bool disposed; // To detect redundant calls
-
 		/// <summary>
 		///	This API call executes a query against Autotask and returns an array of matching entities.
 		///	The queries are built using the QueryXML format and will return a maximum of 500 records at once,
@@ -30,24 +23,43 @@ namespace AutoTask.Api
 		/// </summary>
 		private const int AutoTaskPageSize = 500;
 
+		private ATWSSoapClient? _autoTaskClient;
+		private bool disposed; // To detect redundant calls
+
+		internal AutoTaskLogger AutoTaskLogger { get; }
+
+		private readonly AutotaskIntegrations _autotaskIntegrations;
+		private readonly ClientOptions _clientOptions;
+		private readonly ILogger _logger;
+		private readonly string _username;
+		private readonly string _password;
+
 		public Client(
 			string username,
 			string password,
 			string integrationCode,
-			ILogger? logger = default)
+			ILogger? logger = default,
+			ClientOptions? clientOptions = default)
 		{
 			_logger = logger ?? new NullLogger<Client>();
 			AutoTaskLogger = new AutoTaskLogger(_logger);
-			_autoTaskClient = GetATWSSoapClient(username, password);
 			_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
+			_clientOptions = clientOptions ?? new ClientOptions();
+			_username = username;
+			_password = password;
 		}
 
-		private ATWSSoapClient GetATWSSoapClient(string username, string password)
+		private async Task<ATWSSoapClient> GetATWSSoapClientAsync(CancellationToken cancellationToken)
 		{
+			if (_autoTaskClient != null)
+			{
+				return _autoTaskClient;
+			}
+
 			var binding = new BasicHttpBinding
 			{
-				SendTimeout = new TimeSpan(0, 0, 0, 0, 100000),
-				OpenTimeout = new TimeSpan(0, 0, 0, 0, 100000),
+				SendTimeout = new TimeSpan(0, 0, 0, 0, _clientOptions.SendTimeoutMs),
+				OpenTimeout = new TimeSpan(0, 0, 0, 0, _clientOptions.OpenTimeoutMs),
 				MaxReceivedMessageSize = 10000,
 				ReaderQuotas =
 				{
@@ -68,7 +80,10 @@ namespace AutoTask.Api
 			var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.6/atws.asmx");
 			var autoTaskClient = new ATWSSoapClient(binding, endpoint);
 
-			var zoneInfo = autoTaskClient.getZoneInfoAsync(new getZoneInfoRequest(username)).GetAwaiter().GetResult();
+			var zoneInfo = await autoTaskClient
+				.getZoneInfoAsync(new getZoneInfoRequest(_username))
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
 
 			// Create the binding.
 			// must use BasicHttpBinding instead of WSHttpBinding
@@ -93,20 +108,23 @@ namespace AutoTask.Api
 
 			autoTaskClient = new ATWSSoapClient(myBinding, ea);
 			autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
-			autoTaskClient.ClientCredentials.UserName.UserName = username;
-			autoTaskClient.ClientCredentials.UserName.Password = password;
-			return autoTaskClient;
+			autoTaskClient.ClientCredentials.UserName.UserName = _username;
+			autoTaskClient.ClientCredentials.UserName.Password = _password;
+			return _autoTaskClient = autoTaskClient;
 		}
 
-		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
-			=> await _autoTaskClient.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType)).ConfigureAwait(false);
+		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType, CancellationToken cancellationToken = default)
+			=> await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+				.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType))
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
 
 		/// <summary>
 		/// Use GetAllAsync if you want to auto-page more than 500 results
 		/// </summary>
 		/// <param name="sXml"></param>
 		/// <returns></returns>
-		public async Task<IEnumerable<Entity>> QueryAsync(string sXml)
+		public async Task<IEnumerable<Entity>> QueryAsync(string sXml, CancellationToken cancellationToken = default)
 		{
 			// this example will not handle the 500 results limitation.
 			// AutoTask only returns up to 500 results in a response. if there are more you must query again for the next 500.
@@ -114,7 +132,10 @@ namespace AutoTask.Api
 			// - Get the highest id in a resultset and keep asking for items when the ID > the last observed value
 			// This post: https://github.com/opendns/autotask-php/issues/9 hints that you CAN rely on using the ID as a paging method
 			// as it is not possible to set the order by in the query and that the results always come back in id asc order.
-			var atwsResponse = await _autoTaskClient.queryAsync(new queryRequest(_autotaskIntegrations, sXml)).ConfigureAwait(false);
+			var atwsResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+				.queryAsync(new queryRequest(_autotaskIntegrations, sXml))
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
 			if (atwsResponse.queryResult.ReturnCode != 1)
 			{
 				var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
@@ -126,7 +147,7 @@ namespace AutoTask.Api
 			return atwsResponse.queryResult.EntityResults;
 		}
 
-		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml)
+		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml, CancellationToken cancellationToken = default)
 		{
 			var list = new List<Entity>();
 
@@ -134,7 +155,10 @@ namespace AutoTask.Api
 			queryResponse atwsResponse;
 			do
 			{
-				atwsResponse = await _autoTaskClient.queryAsync(new queryRequest(_autotaskIntegrations, amendedSxml)).ConfigureAwait(false);
+				atwsResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+					.queryAsync(new queryRequest(_autotaskIntegrations, amendedSxml))
+					.WithCancellation(cancellationToken)
+					.ConfigureAwait(false);
 				if (atwsResponse.queryResult.ReturnCode != 1)
 				{
 					var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
@@ -163,10 +187,13 @@ namespace AutoTask.Api
 		private string BuildExceptionMessage(string message)
 			=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
-		public async Task<Entity> CreateAsync(Entity entity)
+		public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
 		{
 			var createRequest = new createRequest(_autotaskIntegrations, new[] { entity });
-			var createResponse = await _autoTaskClient.createAsync(createRequest).ConfigureAwait(false);
+			var createResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+				.createAsync(createRequest)
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
 			var errorCount = createResponse.createResult.Errors.Length;
 			if (errorCount > 0)
 			{
@@ -189,10 +216,13 @@ namespace AutoTask.Api
 			return createdEntity;
 		}
 
-		public async System.Threading.Tasks.Task DeleteAsync(Entity entity)
+		public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken = default)
 		{
 			var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
-			var deleteResponse = await _autoTaskClient.deleteAsync(deleteRequest).ConfigureAwait(false);
+			var deleteResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+				.deleteAsync(deleteRequest)
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
 			var errorCount = deleteResponse.deleteResult.Errors.Length;
 			if (errorCount > 0)
 			{
@@ -212,13 +242,16 @@ namespace AutoTask.Api
 			_logger.LogDebug($"Successfully deleted entity with Id: {entity?.id.ToString() ?? "UNKNOWN!"}");
 		}
 
-		public async Task<Entity> UpdateAsync(Entity entity)
+		public async Task<Entity> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
 		=> (await UpdateAsync(new[] { entity }).ConfigureAwait(false)).Single();
 
-		public async Task<Entity[]> UpdateAsync(Entity[] entityArray)
+		public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken = default)
 		{
 			var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
-			var updateResponse = await _autoTaskClient.updateAsync(updateRequest).ConfigureAwait(false);
+			var updateResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+				.updateAsync(updateRequest)
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
 			var errorCount = updateResponse.updateResult.Errors.Length;
 			if (errorCount > 0)
 			{
@@ -244,7 +277,14 @@ namespace AutoTask.Api
 			return updatedEntities;
 		}
 
-		public async Task<string> GetWsdlVersion() => (await _autoTaskClient.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations)).ConfigureAwait(false)).GetWsdlVersionResult;
+		public async Task<string> GetWsdlVersion(CancellationToken cancellationToken = default)
+		{
+			var getWsdlVersionResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+				.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations))
+				.WithCancellation(cancellationToken)
+				.ConfigureAwait(false);
+			return getWsdlVersionResponse.GetWsdlVersionResult;
+		}
 
 		#region IDisposable Support
 
@@ -256,19 +296,19 @@ namespace AutoTask.Api
 				{
 					try
 					{
-						_autoTaskClient.Close();
+						_autoTaskClient?.Close();
 					}
 					catch (CommunicationException)
 					{
-						_autoTaskClient.Abort();
+						_autoTaskClient?.Abort();
 					}
 					catch (TimeoutException)
 					{
-						_autoTaskClient.Abort();
+						_autoTaskClient?.Abort();
 					}
 					catch
 					{
-						_autoTaskClient.Abort();
+						_autoTaskClient?.Abort();
 						throw;
 					}
 				}
