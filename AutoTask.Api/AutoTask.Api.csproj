@@ -45,8 +45,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<None Remove="Icon.png" />
-	</ItemGroup>
-	<ItemGroup>
 		<None Include="Icon.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 
