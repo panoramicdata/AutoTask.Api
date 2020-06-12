@@ -11,7 +11,7 @@
 		<RepositoryUrl>https://github.com/panoramicdata/AutoTask.Api</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>AutoTask API</PackageTags>
-		<PackageReleaseNotes>Added the use of cancellation tokens to avoid waiting for long-running queries.</PackageReleaseNotes>
+		<PackageReleaseNotes>Added the option to pre-provide zone information.  This avoids one call just after creating the client.</PackageReleaseNotes>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Company>Panoramic Data Limited</Company>
