@@ -46,5 +46,14 @@ namespace AutoTask.Api.Test.Tickets
 				).ConfigureAwait(false);
 			Assert.NotNull(result);
 		}
+
+		[Fact]
+		public async void Client_Query()
+		{
+			var result = await Client
+				.GetAllAsync("<badsxml />")
+				.ConfigureAwait(false);
+			Assert.NotNull(result);
+		}
 	}
 }

@@ -43,8 +43,8 @@ namespace AutoTask.Api.Filters
 			}
 		}
 
-		public string Field { get; set; }
+		public string Field { get; set; } = null!;
 		public Operator Operator { get; set; }
-		public string Value { get; set; }
+		public string Value { get; set; } = null!;
 	}
 }

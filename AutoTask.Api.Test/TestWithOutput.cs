@@ -23,6 +23,10 @@ namespace AutoTask.Api.Test
 			EndEpoch = nowUtc.ToUnixTimeSeconds();
 			var configuration = LoadConfiguration("appsettings.json");
 			var autoTaskCredentials = configuration.AutoTaskCredentials;
+			if (autoTaskCredentials is null)
+			{
+				throw new System.Configuration.ConfigurationErrorsException("Missing configuration.");
+			}
 			Client = new Client(
 				autoTaskCredentials.Username,
 				autoTaskCredentials.Password,
@@ -41,7 +45,12 @@ namespace AutoTask.Api.Test
 		protected static Configuration LoadConfiguration(string jsonFilePath)
 		{
 			var location = typeof(TestWithOutput).GetTypeInfo().Assembly.Location;
-			var dirPath = Path.Combine(Path.GetDirectoryName(location), "..\\..\\..");
+			var path1 = Path.GetDirectoryName(location);
+			if (path1 is null)
+			{
+				throw new InvalidOperationException("path is null");
+			}
+			var dirPath = Path.Combine(path1, "..\\..\\..");
 
 			Configuration configuration;
 			var configurationRoot = new ConfigurationBuilder()

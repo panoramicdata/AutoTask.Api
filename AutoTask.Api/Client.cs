@@ -77,13 +77,24 @@ namespace AutoTask.Api
 					}
 				}
 			};
-			var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.6/atws.asmx");
-			var autoTaskClient = new ATWSSoapClient(binding, endpoint);
 
-			var zoneInfo = await autoTaskClient
-				.getZoneInfoAsync(new getZoneInfoRequest(_username))
-				.WithCancellation(cancellationToken)
-				.ConfigureAwait(false);
+			string endpointAddressUrl;
+			if (_clientOptions.ServerId is null)
+			{
+				var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.6/atws.asmx");
+				using var zoneInfoAutoTaskClient = new ATWSSoapClient(binding, endpoint);
+
+				var zoneInfo = await zoneInfoAutoTaskClient
+					.getZoneInfoAsync(new getZoneInfoRequest(_username))
+					.WithCancellation(cancellationToken)
+					.ConfigureAwait(false);
+				zoneInfoAutoTaskClient.Close();
+				endpointAddressUrl = zoneInfo.getZoneInfoResult.URL;
+			}
+			else
+			{
+				endpointAddressUrl = $"https://webservices{_clientOptions.ServerId}.autotask.net/ATServices/1.6/atws.asmx";
+			}
 
 			// Create the binding.
 			// must use BasicHttpBinding instead of WSHttpBinding
@@ -102,11 +113,9 @@ namespace AutoTask.Api
 			//The maximum message size quota for incoming messages (65536) has been exceeded. To increase the quota, use the MaxReceivedMessageSize property on the appropriate binding element.
 
 			// Create the endpoint address.
-			var ea = new EndpointAddress(zoneInfo.getZoneInfoResult.URL);
+			var ea = new EndpointAddress(endpointAddressUrl);
 
-			autoTaskClient.Close();
-
-			autoTaskClient = new ATWSSoapClient(myBinding, ea);
+			var autoTaskClient = new ATWSSoapClient(myBinding, ea);
 			autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
 			autoTaskClient.ClientCredentials.UserName.UserName = _username;
 			autoTaskClient.ClientCredentials.UserName.Password = _password;

@@ -2,6 +2,6 @@
 {
 	public class Configuration
 	{
-		public AutoTaskCredentials AutoTaskCredentials { get; set; }
+		public AutoTaskCredentials? AutoTaskCredentials { get; set; }
 	}
 }
