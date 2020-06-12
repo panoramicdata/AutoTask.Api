@@ -81,7 +81,7 @@ namespace AutoTask.Api
 			string endpointAddressUrl;
 			if (_clientOptions.ServerId is null)
 			{
-				var endpoint = new EndpointAddress("https://webservices1.autotask.net/ATServices/1.6/atws.asmx");
+				var endpoint = new EndpointAddress("https://webservices.autotask.net/ATServices/1.6/atws.asmx");
 				using var zoneInfoAutoTaskClient = new ATWSSoapClient(binding, endpoint);
 
 				var zoneInfo = await zoneInfoAutoTaskClient
