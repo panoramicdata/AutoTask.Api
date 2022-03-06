@@ -78,13 +78,11 @@ namespace AutoTask.Api
 
 		public async Task<List<JObject>> GetAccountsAsync(Filter filter)
 			=> (await GetAsync<Account>(filter).ConfigureAwait(false))
-				.Select(account => GetFilteredObject(account, filter))
-				.ToList();
+				.ConvertAll(account => GetFilteredObject(account, filter));
 
 		public async Task<List<JObject>> GetIssuesAsync(Filter filter)
 			=> (await GetAsync<Ticket>(filter).ConfigureAwait(false))
-				.Select(account => GetFilteredObject(account, filter))
-			.ToList();
+				.ConvertAll(account => GetFilteredObject(account, filter));
 
 		private JObject GetFilteredObject(object originalObject, Filter filter)
 		{
@@ -130,31 +128,26 @@ namespace AutoTask.Api
 			: $"<condition operator=\"and\">{string.Concat(filter.Items.Select(fi => $"<field{(fi.Field.StartsWith(UDFPrefix) ? " udf=\"true\"" : string.Empty)}>{(fi.Field.StartsWith(UDFPrefix) ? fi.Field.Substring(UDFPrefix.Length) : fi.Field)}<expression op=\"{GetOperatorString(fi.Operator)}\">{fi.Value}</expression></field>"))}</condition>";
 
 		private static object GetOperatorString(Operator @operator)
-		{
-			// See page 315 of https://ww4.autotask.net/help/Content/LinkedDOCUMENTS/WSAPI/T_WebServicesAPIv1_5.pdf
-			switch (@operator)
+			=> @operator switch
 			{
-				case Operator.BeginsWith:
-				case Operator.EndsWith:
-				case Operator.Like:
-				case Operator.NotLike:
-				case Operator.GreaterThanOrEquals:
-				case Operator.LessThanOrEquals:
-				case Operator.GreaterThan:
-				case Operator.LessThan:
-				case Operator.Equals:
-					return @operator.ToString().ToLowerInvariant();
-				case Operator.NotEquals:
-					return "notequal";
-				default:
-					throw new NotSupportedException($"{@operator} not supported.");
-			}
-		}
+				Operator.BeginsWith or
+				Operator.EndsWith or
+				Operator.Like or
+				Operator.NotLike or
+				Operator.GreaterThanOrEquals or
+				Operator.LessThanOrEquals or
+				Operator.GreaterThan or
+				Operator.LessThan or
+				Operator.Equals
+					=> @operator.ToString().ToLowerInvariant(),
+				Operator.NotEquals => "notequal",
+					_ => throw new NotSupportedException($"{@operator} not supported.")
+			};
 
 		public async Task<List<JObject>> GetIssueNotesAsync(Filter filter)
 			=> (await GetAsync<TicketNote>(filter).ConfigureAwait(false))
-				.Select(account => GetFilteredObject(account, filter))
-				.ToList();
+				.ConvertAll(account => GetFilteredObject(account, filter))
+;
 
 		public string CiLookup(string lookupValue)
 		{

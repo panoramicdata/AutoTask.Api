@@ -6,7 +6,7 @@ namespace AutoTask.Api.Filters
 {
 	public class FilterItem
 	{
-		private static readonly Dictionary<string, Operator> Operators = new Dictionary<string, Operator>
+		private static readonly Dictionary<string, Operator> Operators = new()
 		{
 			{ ">:", Operator.GreaterThanOrEquals },
 			{ "<:", Operator.LessThanOrEquals },
