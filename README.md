@@ -1,5 +1,7 @@
 # AutoTask.Api
 
+[![Nuget](https://img.shields.io/nuget/v/AutoTask.Api)](https://www.nuget.org/packages/AutoTask.Api/)
+
 To install the AutoTask API in your project, add the nuget package:
 
 AutoTask.Api
