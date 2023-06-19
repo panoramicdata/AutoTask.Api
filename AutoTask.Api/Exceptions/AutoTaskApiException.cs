@@ -29,7 +29,7 @@ namespace AutoTask.Api.Exceptions
 			Response = null;
 		}
 
-		public AutoTaskApiException() : base()
+		public AutoTaskApiException()
 		{
 		}
 	}
