@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace AutoTask.Api.Exceptions
 {
 	[Serializable]
-	internal class AutoTaskApiException : Exception
+	public class AutoTaskApiException : Exception
 	{
 		public ATWSResponse? Response { get; }
 
