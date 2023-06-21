@@ -22,14 +22,23 @@ namespace AutoTask.Api
 		}
 
 		// IEndpointBehavior
-		public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters) { }
+		public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
+		{
+			// No customization required for this scenario
+		}
 
 		public void ApplyClientBehavior(ServiceEndpoint endpoint, ClientRuntime clientRuntime)
 			=> clientRuntime.ClientMessageInspectors.Add(this);
 
-		public void ApplyDispatchBehavior(ServiceEndpoint endpoint, EndpointDispatcher endpointDispatcher) { }
+		public void ApplyDispatchBehavior(ServiceEndpoint endpoint, EndpointDispatcher endpointDispatcher)
+		{
+			// No customization required for this scenario
+		}
 
-		public void Validate(ServiceEndpoint endpoint) { }
+		public void Validate(ServiceEndpoint endpoint)
+		{
+			// No customization required for this scenario
+		}
 
 		// IClientMessageInspector
 		public void AfterReceiveReply(ref Message reply, object correlationState)
