@@ -122,7 +122,10 @@ namespace AutoTask.Api
 			return _autoTaskClient = autoTaskClient;
 		}
 
-		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType, CancellationToken cancellationToken = default)
+		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
+			=> await GetFieldInfoAsync(psObjectType, CancellationToken.None);
+
+		public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType, CancellationToken cancellationToken)
 			=> await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 				.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType))
 				.WithCancellation(cancellationToken)
@@ -133,7 +136,11 @@ namespace AutoTask.Api
 		/// </summary>
 		/// <param name="sXml"></param>
 		/// <returns></returns>
-		public async Task<IEnumerable<Entity>> QueryAsync(string sXml, CancellationToken cancellationToken = default)
+
+		public async Task<IEnumerable<Entity>> QueryAsync(string sXml)
+			=> await QueryAsync(sXml, CancellationToken.None);
+
+		public async Task<IEnumerable<Entity>> QueryAsync(string sXml, CancellationToken cancellationToken)
 		{
 			// this example will not handle the 500 results limitation.
 			// AutoTask only returns up to 500 results in a response. if there are more you must query again for the next 500.
@@ -156,7 +163,10 @@ namespace AutoTask.Api
 			return atwsResponse.queryResult.EntityResults;
 		}
 
-		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml, CancellationToken cancellationToken = default)
+		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml)
+			=> await GetAllAsync(sXml, CancellationToken.None);
+
+		public async Task<IEnumerable<Entity>> GetAllAsync(string sXml, CancellationToken cancellationToken)
 		{
 			var list = new List<Entity>();
 
@@ -196,7 +206,10 @@ namespace AutoTask.Api
 		private string BuildExceptionMessage(string message)
 			=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
-		public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
+		public async Task<Entity> CreateAsync(Entity entity)
+			=> await CreateAsync(entity, CancellationToken.None);
+
+		public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken)
 		{
 			var createRequest = new createRequest(_autotaskIntegrations, new[] { entity });
 			var createResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -225,7 +238,10 @@ namespace AutoTask.Api
 			return createdEntity;
 		}
 
-		public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken = default)
+		public async System.Threading.Tasks.Task DeleteAsync(Entity entity)
+			=> await DeleteAsync(entity, CancellationToken.None);
+
+		public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken)
 		{
 			var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
 			var deleteResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -251,10 +267,16 @@ namespace AutoTask.Api
 			_logger.LogDebug($"Successfully deleted entity with Id: {entity?.id.ToString() ?? "UNKNOWN!"}");
 		}
 
-		public async Task<Entity> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
+		public async Task<Entity> UpdateAsync(Entity entity)
+			=> await UpdateAsync(entity, CancellationToken.None);
+
+		public async Task<Entity> UpdateAsync(Entity entity, CancellationToken cancellationToken)
 		=> (await UpdateAsync(new[] { entity }).ConfigureAwait(false)).Single();
 
-		public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken = default)
+		public async Task<Entity[]> UpdateAsync(Entity[] entityArray)
+			=> await UpdateAsync(entityArray, CancellationToken.None);
+
+		public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken)
 		{
 			var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
 			var updateResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -286,7 +308,10 @@ namespace AutoTask.Api
 			return updatedEntities;
 		}
 
-		public async Task<string> GetWsdlVersion(CancellationToken cancellationToken = default)
+		public async Task<string> GetWdslVersion()
+			=> await GetWsdlVersion(CancellationToken.None);
+
+		public async Task<string> GetWsdlVersion(CancellationToken cancellationToken)
 		{
 			var getWsdlVersionResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 				.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations))
