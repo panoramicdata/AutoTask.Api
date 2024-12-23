@@ -22,22 +22,30 @@ namespace AutoTask.Api.Test
 			StartEpoch = nowUtc.AddDays(-30).ToUnixTimeSeconds();
 			EndEpoch = nowUtc.ToUnixTimeSeconds();
 			var configuration = LoadConfiguration("appsettings.json");
-			var autoTaskCredentials = configuration.AutoTaskCredentials;
-			if (autoTaskCredentials is null)
+			var autoTaskCredentials = configuration.AutoTaskCredentials
+				?? throw new System.Configuration.ConfigurationErrorsException("Missing configuration.");
+
+			ClientOptions? clientOptions = null;
+			if (autoTaskCredentials.ServerId.HasValue)
 			{
-				throw new System.Configuration.ConfigurationErrorsException("Missing configuration.");
+				clientOptions = new()
+				{
+					ServerId = autoTaskCredentials.ServerId.Value
+				};
 			}
+
 			Client = new Client(
 				autoTaskCredentials.Username,
 				autoTaskCredentials.Password,
 				autoTaskCredentials.IntegrationCode,
-				Logger
+				Logger,
+				clientOptions
 				);
 			AutoTaskClient = new AutoTaskClient(new AutoTaskConfiguration
 			{
 				Username = autoTaskCredentials.Username,
 				Password = autoTaskCredentials.Password,
-				IntegrationCode = autoTaskCredentials.IntegrationCode
+				IntegrationCode = autoTaskCredentials.IntegrationCode,
 			});
 			Stopwatch = Stopwatch.StartNew();
 		}
@@ -55,7 +63,8 @@ namespace AutoTask.Api.Test
 			Configuration configuration;
 			var configurationRoot = new ConfigurationBuilder()
 				.SetBasePath(dirPath)
-				.AddJsonFile(jsonFilePath, false, false)
+				.AddUserSecrets<TestWithOutput>()
+				.AddJsonFile(jsonFilePath, true, false)
 				.Build();
 
 			var services = new ServiceCollection();
