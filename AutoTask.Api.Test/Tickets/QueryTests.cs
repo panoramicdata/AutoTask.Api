@@ -3,56 +3,55 @@ using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace AutoTask.Api.Test.Tickets
+namespace AutoTask.Api.Test.Tickets;
+
+public class QueryTests : TestWithOutput
 {
-	public class QueryTests : TestWithOutput
+	public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 	{
-		public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
-		{
-		}
+	}
 
-		[Fact]
-		public async System.Threading.Tasks.Task AutoTaskClient_Query()
-		{
-			var result = await AutoTaskClient.GetAsync<Ticket>(
-				new Filter
+	[Fact]
+	public async System.Threading.Tasks.Task AutoTaskClient_Query()
+	{
+		var result = await AutoTaskClient.GetAsync<Ticket>(
+			new Filter
+			{
+				Items = new List<FilterItem>
 				{
-					Items = new List<FilterItem>
+					new FilterItem
 					{
-						new FilterItem
-						{
-							Field = "UDF Problem Signature",
-							Operator = Operator.Equals,
-							Value = "LMD15169"
-						},
-						new FilterItem
-						{
-							Field = "ticketCategory",
-							Operator = Operator.Equals,
-							Value = "2"
-						},
-						new FilterItem
-						{
-							Field = "ticketType",
-							Operator = Operator.Equals,
-							Value = "2"
-						},
-						// new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "5" }, // Complete
-						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "29" }, // Resolved
-						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "34" }, // Cancelled
-						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "66" }, // SD/NOC Responded
-					}
+						Field = "UDF Problem Signature",
+						Operator = Operator.Equals,
+						Value = "LMD15169"
+					},
+					new FilterItem
+					{
+						Field = "ticketCategory",
+						Operator = Operator.Equals,
+						Value = "2"
+					},
+					new FilterItem
+					{
+						Field = "ticketType",
+						Operator = Operator.Equals,
+						Value = "2"
+					},
+					// new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "5" }, // Complete
+					new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "29" }, // Resolved
+					new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "34" }, // Cancelled
+					new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "66" }, // SD/NOC Responded
 				}
-				);
-			Assert.NotNull(result);
-		}
+			}
+			);
+		Assert.NotNull(result);
+	}
 
-		[Fact]
-		public async System.Threading.Tasks.Task Client_Query()
-		{
-			var result = await Client
-				.GetAllAsync("<badsxml />");
-			Assert.NotNull(result);
-		}
+	[Fact]
+	public async System.Threading.Tasks.Task Client_Query()
+	{
+		var result = await Client
+			.GetAllAsync("<badsxml />");
+		Assert.NotNull(result);
 	}
 }

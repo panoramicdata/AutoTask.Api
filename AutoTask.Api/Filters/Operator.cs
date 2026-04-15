@@ -1,18 +1,17 @@
-﻿namespace AutoTask.Api.Filters
+﻿namespace AutoTask.Api.Filters;
+
+public enum Operator
 {
-	public enum Operator
-	{
-		GreaterThanOrEquals,
-		LessThanOrEquals,
-		GreaterThan,
-		LessThan,
-		RegexMatches,
-		RegexNotMatches,
-		NotEquals,
-		Equals,
-		BeginsWith,
-		EndsWith,
-		Like,
-		NotLike
-	}
+	GreaterThanOrEquals,
+	LessThanOrEquals,
+	GreaterThan,
+	LessThan,
+	RegexMatches,
+	RegexNotMatches,
+	NotEquals,
+	Equals,
+	BeginsWith,
+	EndsWith,
+	Like,
+	NotLike
 }

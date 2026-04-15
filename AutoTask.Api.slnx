@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+    <File Path="version.json" />
+  </Folder>
+  <Project Path="AutoTask.Api.Test/AutoTask.Api.Test.csproj" />
+  <Project Path="AutoTask.Api/AutoTask.Api.csproj" />
+</Solution>

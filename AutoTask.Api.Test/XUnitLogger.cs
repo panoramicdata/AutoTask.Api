@@ -2,28 +2,27 @@
 using System;
 using Xunit.Abstractions;
 
-namespace AutoTask.Api.Test
+namespace AutoTask.Api.Test;
+
+public class XunitLogger : ILogger, IDisposable
 {
-	public class XunitLogger : ILogger, IDisposable
+	private readonly ITestOutputHelper _output;
+
+	public XunitLogger(ITestOutputHelper output)
 	{
-		private readonly ITestOutputHelper _output;
+		_output = output;
+	}
 
-		public XunitLogger(ITestOutputHelper output)
-		{
-			_output = output;
-		}
+	public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+		=> _output.WriteLine(state?.ToString() ?? throw new ArgumentNullException(nameof(state)));
 
-		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-			=> _output.WriteLine(state?.ToString() ?? throw new ArgumentNullException(nameof(state)));
+	public bool IsEnabled(LogLevel logLevel)
+		=> true;
 
-		public bool IsEnabled(LogLevel logLevel)
-			=> true;
+	public IDisposable BeginScope<TState>(TState state)
+		=> this;
 
-		public IDisposable BeginScope<TState>(TState state)
-			=> this;
-
-		public void Dispose()
-		{
-		}
+	public void Dispose()
+	{
 	}
 }

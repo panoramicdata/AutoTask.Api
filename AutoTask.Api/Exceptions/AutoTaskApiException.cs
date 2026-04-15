@@ -2,35 +2,29 @@
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace AutoTask.Api.Exceptions
+namespace AutoTask.Api.Exceptions;
+
+[Serializable]
+public class AutoTaskApiException : Exception
 {
-	[Serializable]
-	public class AutoTaskApiException : Exception
+	public ATWSResponse? Response { get; }
+
+	public AutoTaskApiException(ATWSResponse queryResult) : base(string.Join(", ", queryResult.Errors.Select(e => e.Message)))
 	{
-		public ATWSResponse? Response { get; }
+		Response = queryResult;
+	}
 
-		public AutoTaskApiException(ATWSResponse queryResult) : base(string.Join(", ", queryResult.Errors.Select(e => e.Message)))
-		{
-			Response = queryResult;
-		}
+	public AutoTaskApiException(string message) : base(message)
+	{
+		Response = null;
+	}
 
-		public AutoTaskApiException(string message) : base(message)
-		{
-			Response = null;
-		}
+	public AutoTaskApiException(string message, Exception innerException) : base(message, innerException)
+	{
+		Response = null;
+	}
 
-		public AutoTaskApiException(string message, Exception innerException) : base(message, innerException)
-		{
-			Response = null;
-		}
-
-		protected AutoTaskApiException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-			Response = null;
-		}
-
-		public AutoTaskApiException()
-		{
-		}
+	public AutoTaskApiException()
+	{
 	}
 }

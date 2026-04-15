@@ -4,56 +4,55 @@ using System.ServiceModel.Channels;
 using System.ServiceModel.Description;
 using System.ServiceModel.Dispatcher;
 
-namespace AutoTask.Api
+namespace AutoTask.Api;
+
+// based on
+// https://stackoverflow.com/questions/12842014/logging-soap-raw-response-received-by-a-clientbase-object
+
+public class AutoTaskLogger : IEndpointBehavior, IClientMessageInspector
 {
-	// based on
-	// https://stackoverflow.com/questions/12842014/logging-soap-raw-response-received-by-a-clientbase-object
+	private readonly ILogger _logger;
 
-	public class AutoTaskLogger : IEndpointBehavior, IClientMessageInspector
+	internal string? LastResponse { get; private set; }
+	internal string? LastRequest { get; private set; }
+
+	public AutoTaskLogger(ILogger logger)
 	{
-		private readonly ILogger _logger;
+		_logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
+	}
 
-		internal string? LastResponse { get; private set; }
-		internal string? LastRequest { get; private set; }
+	// IEndpointBehavior
+	public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
+	{
+		// No customization required for this scenario
+	}
 
-		public AutoTaskLogger(ILogger logger)
-		{
-			_logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
-		}
+	public void ApplyClientBehavior(ServiceEndpoint endpoint, ClientRuntime clientRuntime)
+		=> clientRuntime.ClientMessageInspectors.Add(this);
 
-		// IEndpointBehavior
-		public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
-		{
-			// No customization required for this scenario
-		}
+	public void ApplyDispatchBehavior(ServiceEndpoint endpoint, EndpointDispatcher endpointDispatcher)
+	{
+		// No customization required for this scenario
+	}
 
-		public void ApplyClientBehavior(ServiceEndpoint endpoint, ClientRuntime clientRuntime)
-			=> clientRuntime.ClientMessageInspectors.Add(this);
+	public void Validate(ServiceEndpoint endpoint)
+	{
+		// No customization required for this scenario
+	}
 
-		public void ApplyDispatchBehavior(ServiceEndpoint endpoint, EndpointDispatcher endpointDispatcher)
-		{
-			// No customization required for this scenario
-		}
+	// IClientMessageInspector
+	public void AfterReceiveReply(ref Message reply, object correlationState)
+	{
+		LastResponse = reply.ToString();
+		_logger.LogTrace("AutoTask Response: " + LastResponse);
+	}
 
-		public void Validate(ServiceEndpoint endpoint)
-		{
-			// No customization required for this scenario
-		}
-
-		// IClientMessageInspector
-		public void AfterReceiveReply(ref Message reply, object correlationState)
-		{
-			LastResponse = reply.ToString();
-			_logger.LogTrace("AutoTask Response: " + LastResponse);
-		}
-
-		public object? BeforeSendRequest(ref Message request, IClientChannel channel)
-		{
-			LastRequest = request.ToString();
-			// Clear the response so it's clear that any response set is the response to the request
-			LastResponse = null;
-			_logger.LogDebug("AutoTask Request: " + LastRequest);
-			return null;
-		}
+	public object? BeforeSendRequest(ref Message request, IClientChannel channel)
+	{
+		LastRequest = request.ToString();
+		// Clear the response so it's clear that any response set is the response to the request
+		LastResponse = null;
+		_logger.LogDebug("AutoTask Request: " + LastRequest);
+		return null;
 	}
 }

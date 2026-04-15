@@ -1,7 +1,6 @@
-﻿namespace AutoTask.Api.Test.Config
+﻿namespace AutoTask.Api.Test.Config;
+
+public class Configuration
 {
-	public class Configuration
-	{
-		public AutoTaskCredentials? AutoTaskCredentials { get; set; }
-	}
+	public AutoTaskCredentials? AutoTaskCredentials { get; set; }
 }
