@@ -57,7 +57,7 @@ public class TestWithOutput
 	{
 		var location = typeof(TestWithOutput).GetTypeInfo().Assembly.Location;
 		var path1 = Path.GetDirectoryName(location) ?? throw new InvalidOperationException("path is null");
-		var dirPath = Path.Combine(path1, "..\\..\\..");
+		var dirPath = Path.GetFullPath(Path.Combine(path1, "..", "..", ".."));
 
 		Configuration configuration;
 		var configurationRoot = new ConfigurationBuilder()
