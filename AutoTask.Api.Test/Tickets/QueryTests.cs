@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 namespace AutoTask.Api.Test.Tickets;
 
 /// <summary>Query tests for the Ticket entity.</summary>
+[Trait("Category", "Integration")]
 public class QueryTests : TestWithOutput
 {
 	/// <summary>Initializes a new instance of <see cref="QueryTests"/>.</summary>

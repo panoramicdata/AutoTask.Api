@@ -7,6 +7,7 @@ namespace AutoTask.Api.Test.Currencies;
 
 
 /// <summary>Query tests for the Currency entity.</summary>
+[Trait("Category", "Integration")]
 public class QueryTests : TestWithOutput
 {
 	/// <summary>Initializes a new instance of <see cref="QueryTests"/>.</summary>

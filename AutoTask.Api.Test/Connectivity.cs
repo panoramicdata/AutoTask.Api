@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 namespace AutoTask.Api.Test;
 
 /// <summary>Connectivity tests that verify basic AutoTask API operations.</summary>
+[Trait("Category", "Integration")]
 public class Connectivity : TestWithOutput
 {
 	/// <summary>Initializes a new instance of <see cref="Connectivity"/>.</summary>
