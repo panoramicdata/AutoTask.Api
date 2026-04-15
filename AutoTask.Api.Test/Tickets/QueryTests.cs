@@ -12,7 +12,7 @@ namespace AutoTask.Api.Test.Tickets
 		}
 
 		[Fact]
-		public async void AutoTaskClient_Query()
+		public async System.Threading.Tasks.Task AutoTaskClient_Query()
 		{
 			var result = await AutoTaskClient.GetAsync<Ticket>(
 				new Filter
@@ -43,16 +43,15 @@ namespace AutoTask.Api.Test.Tickets
 						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "66" }, // SD/NOC Responded
 					}
 				}
-				).ConfigureAwait(false);
+				);
 			Assert.NotNull(result);
 		}
 
 		[Fact]
-		public async void Client_Query()
+		public async System.Threading.Tasks.Task Client_Query()
 		{
 			var result = await Client
-				.GetAllAsync("<badsxml />")
-				.ConfigureAwait(false);
+				.GetAllAsync("<badsxml />");
 			Assert.NotNull(result);
 		}
 	}

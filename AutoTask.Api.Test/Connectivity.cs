@@ -12,34 +12,31 @@ namespace AutoTask.Api.Test
 		}
 
 		[Fact]
-		public async void BasicTest_Connects()
+		public async System.Threading.Tasks.Task BasicTest_Connects()
 		{
 			var result = await Client
-				.QueryAsync("<queryxml><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>")
-				.ConfigureAwait(false);
+				.QueryAsync("<queryxml><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>");
 			Assert.NotNull(result);
 		}
 
 		[Fact]
-		public async void GetWsdlVersion_Succeeds()
+		public async System.Threading.Tasks.Task GetWsdlVersion_Succeeds()
 		{
 			var result = await Client
-				.GetWsdlVersion()
-				.ConfigureAwait(false);
+				.GetWsdlVersion();
 			Assert.NotNull(result);
 		}
 
 		[Fact]
-		public async void GetFieldInfo()
+		public async System.Threading.Tasks.Task GetFieldInfo()
 		{
 			var result = await Client
-				.GetFieldInfoAsync(nameof(Account))
-				.ConfigureAwait(false);
+				.GetFieldInfoAsync(nameof(Account));
 			Assert.NotNull(result);
 		}
 
 		[Fact]
-		public async void AutoTaskClient_Query()
+		public async System.Threading.Tasks.Task AutoTaskClient_Query()
 		{
 			var result = await AutoTaskClient.GetAsync<Ticket>(
 				new Filter
@@ -70,7 +67,7 @@ namespace AutoTask.Api.Test
 						new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "66" }, // SD/NOC Responded
 					}
 				}
-				).ConfigureAwait(false);
+				);
 			Assert.NotNull(result);
 		}
 	}

@@ -13,7 +13,7 @@ namespace AutoTask.Api.Test.Currencies
 		}
 
 		[Fact]
-		public async void AutoTaskClientCurrency_Query()
+		public async System.Threading.Tasks.Task AutoTaskClientCurrency_Query()
 		{
 			var result = await AutoTaskClient.GetAsync<Currency>(
 				new Filter
@@ -23,7 +23,7 @@ namespace AutoTask.Api.Test.Currencies
 						new FilterItem{Field = "id", Operator = Operator.Equals, Value = "5" }, // Resolved
 					}
 				}
-				).ConfigureAwait(false);
+				);
 			Assert.NotNull(result);
 			Assert.Empty(result);
 		}

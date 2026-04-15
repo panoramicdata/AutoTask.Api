@@ -5,5 +5,6 @@
 		public string Username { get; set; } = null!;
 		public string Password { get; set; } = null!;
 		public string IntegrationCode { get; set; } = null!;
+		public int? ServerId { get; set; }
 	}
 }
