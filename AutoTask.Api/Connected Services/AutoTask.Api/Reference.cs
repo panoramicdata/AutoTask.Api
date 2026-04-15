@@ -7,6 +7,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 namespace AutoTask.Api
 {
 
@@ -31723,7 +31725,7 @@ namespace AutoTask.Api
 			return System.Threading.Tasks.Task.Factory.FromAsync(((System.ServiceModel.ICommunicationObject)(this)).BeginOpen(null, null), new System.Action<System.IAsyncResult>(((System.ServiceModel.ICommunicationObject)(this)).EndOpen));
 		}
 
-		public virtual System.Threading.Tasks.Task CloseAsync()
+		public new virtual System.Threading.Tasks.Task CloseAsync()
 		{
 			return System.Threading.Tasks.Task.Factory.FromAsync(((System.ServiceModel.ICommunicationObject)(this)).BeginClose(null, null), new System.Action<System.IAsyncResult>(((System.ServiceModel.ICommunicationObject)(this)).EndClose));
 		}

@@ -1,3 +1,7 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[![Codacy Badge](https://app.codacy.com/project/badge/grade/AutoTask.Api)](https://app.codacy.com/gh/panoramicdata/AutoTask.Api/dashboard)
+
 # AutoTask.Api
 
 [![Nuget](https://img.shields.io/nuget/v/AutoTask.Api)](https://www.nuget.org/packages/AutoTask.Api/)

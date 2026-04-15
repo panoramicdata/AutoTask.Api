@@ -21,11 +21,16 @@ public class AutoTaskClient : IDisposable
 	private ATWSSoapClient? _clientDoNotUseDirectly;
 	private AutotaskIntegrations? _autotaskIntegrations;
 
+	/// <summary>Gets the primary key field name.</summary>
 	public string PrimaryKey => "id";
+	/// <summary>Gets the ticket number field name.</summary>
 	public string NumberField => "TicketNumber";
+	/// <summary>Gets the description field name.</summary>
 	public string DescriptionKey => "Description";
+	/// <summary>Gets the ticket note title field name.</summary>
 	public string TicketNoteTitleKey => "TicketNoteTitle";
 
+	/// <summary>Initializes a new instance of <see cref="AutoTaskClient"/> with the supplied configuration.</summary>
 	public AutoTaskClient(AutoTaskConfiguration config)
 	{
 		config.Validate();
@@ -76,10 +81,12 @@ public class AutoTaskClient : IDisposable
 		return await client.queryAsync(new queryRequest(_autotaskIntegrations, sXml)).ConfigureAwait(false);
 	}
 
+	/// <summary>Returns accounts matching the supplied filter.</summary>
 	public async Task<List<JObject>> GetAccountsAsync(Filter filter)
 		=> (await GetAsync<Account>(filter).ConfigureAwait(false))
 			.ConvertAll(account => GetFilteredObject(account, filter));
 
+	/// <summary>Returns tickets (issues) matching the supplied filter.</summary>
 	public async Task<List<JObject>> GetIssuesAsync(Filter filter)
 		=> (await GetAsync<Ticket>(filter).ConfigureAwait(false))
 			.ConvertAll(account => GetFilteredObject(account, filter));
@@ -105,6 +112,7 @@ public class AutoTaskClient : IDisposable
 		return result;
 	}
 
+	/// <summary>Returns entities of type <typeparamref name="T"/> matching the supplied filter.</summary>
 	public async Task<List<T>> GetAsync<T>(Filter filter)
 	{
 		var query = GetQueryString(filter);
@@ -139,11 +147,13 @@ public class AutoTaskClient : IDisposable
 				_ => throw new NotSupportedException($"{@operator} not supported.")
 		};
 
+	/// <summary>Returns ticket notes matching the supplied filter.</summary>
 	public async Task<List<JObject>> GetIssueNotesAsync(Filter filter)
 		=> (await GetAsync<TicketNote>(filter).ConfigureAwait(false))
 			.ConvertAll(account => GetFilteredObject(account, filter))
 ;
 
+	/// <summary>Returns the AutoTask configuration item ID for the supplied lookup value.</summary>
 	public string CiLookup(string lookupValue)
 	{
 		// Get the ticket
@@ -159,6 +169,7 @@ public class AutoTaskClient : IDisposable
 	#region IDisposable Support
 	private bool disposedValue; // To detect redundant calls
 
+	/// <summary>Releases managed resources when <paramref name="disposing"/> is <see langword="true"/>.</summary>
 	protected virtual void Dispose(bool disposing)
 	{
 		if (!disposedValue)
@@ -173,6 +184,7 @@ public class AutoTaskClient : IDisposable
 	}
 
 	// This code added to correctly implement the disposable pattern.
+	/// <inheritdoc/>
 	public void Dispose()
 	{
 		Dispose(true);

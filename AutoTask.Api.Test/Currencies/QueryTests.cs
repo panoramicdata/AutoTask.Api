@@ -6,12 +6,15 @@ using Xunit.Abstractions;
 namespace AutoTask.Api.Test.Currencies;
 
 
+/// <summary>Query tests for the Currency entity.</summary>
 public class QueryTests : TestWithOutput
 {
+	/// <summary>Initializes a new instance of <see cref="QueryTests"/>.</summary>
 	public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 	{
 	}
 
+	/// <summary>Verifies that a currency query with a specific ID returns an empty result.</summary>
 	[Fact]
 	public async System.Threading.Tasks.Task AutoTaskClientCurrency_Query()
 	{

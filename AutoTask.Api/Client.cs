@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace AutoTask.Api;
 
+/// <summary>AutoTask API client that communicates via the AutoTask SOAP web service.</summary>
 public class Client : IDisposable, IClient
 {
 	/// <summary>
@@ -34,6 +35,7 @@ public class Client : IDisposable, IClient
 	private readonly string _username;
 	private readonly string _password;
 
+	/// <summary>Initializes a new AutoTask client with the supplied credentials and options.</summary>
 	public Client(
 		string username,
 		string password,
@@ -122,17 +124,17 @@ public class Client : IDisposable, IClient
 		return _autoTaskClient = autoTaskClient;
 	}
 
+	/// <summary>Returns field metadata for the specified AutoTask object type.</summary>
 	public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType, CancellationToken cancellationToken = default)
 		=> await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType))
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
 
-	/// <summary>
-	/// Use GetAllAsync if you want to auto-page more than 500 results
-	/// </summary>
-	/// <param name="sXml"></param>
-	/// <returns></returns>
+	/// <summary>Executes a query against AutoTask and returns matching entities (up to 500 per page).</summary>
+	/// <param name="sXml">The query XML.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The matching entities.</returns>
 	public async Task<IEnumerable<Entity>> QueryAsync(string sXml, CancellationToken cancellationToken = default)
 	{
 		// this example will not handle the 500 results limitation.
@@ -156,6 +158,7 @@ public class Client : IDisposable, IClient
 		return atwsResponse.queryResult.EntityResults;
 	}
 
+	/// <summary>Returns all entities matching the supplied query XML, auto-paging beyond the 500-record limit.</summary>
 	public async Task<IEnumerable<Entity>> GetAllAsync(string sXml, CancellationToken cancellationToken = default)
 	{
 		var list = new List<Entity>();
@@ -196,6 +199,7 @@ public class Client : IDisposable, IClient
 	private string BuildExceptionMessage(string message)
 		=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
+	/// <summary>Creates a new entity in AutoTask.</summary>
 	public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
 	{
 		var createRequest = new createRequest(_autotaskIntegrations, new[] { entity });
@@ -225,6 +229,7 @@ public class Client : IDisposable, IClient
 		return createdEntity;
 	}
 
+	/// <summary>Deletes an entity from AutoTask.</summary>
 	public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken = default)
 	{
 		var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
@@ -251,9 +256,11 @@ public class Client : IDisposable, IClient
 		_logger.LogDebug($"Successfully deleted entity with Id: {entity?.id.ToString() ?? "UNKNOWN!"}");
 	}
 
+	/// <summary>Updates an existing entity in AutoTask.</summary>
 	public async Task<Entity> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
 	=> (await UpdateAsync(new[] { entity }).ConfigureAwait(false)).Single();
 
+	/// <summary>Updates multiple existing entities in AutoTask.</summary>
 	public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken = default)
 	{
 		var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
@@ -282,6 +289,7 @@ public class Client : IDisposable, IClient
 		return updatedEntities;
 	}
 
+	/// <summary>Returns the WSDL version of the AutoTask web service.</summary>
 	public async Task<string> GetWsdlVersion(CancellationToken cancellationToken = default)
 	{
 		var getWsdlVersionResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -293,6 +301,7 @@ public class Client : IDisposable, IClient
 
 	#region IDisposable Support
 
+	/// <summary>Releases managed resources when <paramref name="disposing"/> is <see langword="true"/>.</summary>
 	protected virtual void Dispose(bool disposing)
 	{
 		if (!disposed)
@@ -322,6 +331,7 @@ public class Client : IDisposable, IClient
 		}
 	}
 
+	/// <inheritdoc/>
 	public void Dispose() => Dispose(true);
 	#endregion
 }

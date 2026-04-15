@@ -5,12 +5,15 @@ using Xunit.Abstractions;
 
 namespace AutoTask.Api.Test;
 
+/// <summary>Connectivity tests that verify basic AutoTask API operations.</summary>
 public class Connectivity : TestWithOutput
 {
+	/// <summary>Initializes a new instance of <see cref="Connectivity"/>.</summary>
 	public Connectivity(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
 	{
 	}
 
+	/// <summary>Verifies that a basic account query returns a non-null result.</summary>
 	[Fact]
 	public async System.Threading.Tasks.Task BasicTest_Connects()
 	{
@@ -19,6 +22,7 @@ public class Connectivity : TestWithOutput
 		Assert.NotNull(result);
 	}
 
+	/// <summary>Verifies that the WSDL version can be retrieved.</summary>
 	[Fact]
 	public async System.Threading.Tasks.Task GetWsdlVersion_Succeeds()
 	{
@@ -27,6 +31,7 @@ public class Connectivity : TestWithOutput
 		Assert.NotNull(result);
 	}
 
+	/// <summary>Verifies that field info can be retrieved for the Account entity.</summary>
 	[Fact]
 	public async System.Threading.Tasks.Task GetFieldInfo()
 	{
@@ -35,6 +40,7 @@ public class Connectivity : TestWithOutput
 		Assert.NotNull(result);
 	}
 
+	/// <summary>Verifies that the AutoTask client can execute a filtered ticket query.</summary>
 	[Fact]
 	public async System.Threading.Tasks.Task AutoTaskClient_Query()
 	{

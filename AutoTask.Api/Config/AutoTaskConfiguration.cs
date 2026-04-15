@@ -1,9 +1,13 @@
 ﻿namespace AutoTask.Api.Config;
 
+/// <summary>Configuration for connecting to the AutoTask API.</summary>
 public class AutoTaskConfiguration
 {
+	/// <summary>Gets or sets the AutoTask username.</summary>
 	public string Username { get; set; } = null!;
+	/// <summary>Gets or sets the AutoTask password.</summary>
 	public string Password { get; set; } = null!;
+	/// <summary>Gets or sets the AutoTask integration code.</summary>
 	public string IntegrationCode { get; set; } = null!;
 
 	internal void Validate()

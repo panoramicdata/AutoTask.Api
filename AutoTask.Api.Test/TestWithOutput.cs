@@ -13,8 +13,10 @@ using Xunit.Abstractions;
 
 namespace AutoTask.Api.Test;
 
+/// <summary>Base class for integration tests that captures xUnit output and initialises AutoTask clients.</summary>
 public class TestWithOutput
 {
+	/// <summary>Initializes a new instance of <see cref="TestWithOutput"/> and sets up clients from configuration.</summary>
 	protected TestWithOutput(ITestOutputHelper iTestOutputHelper)
 	{
 		Logger = new XunitLogger(iTestOutputHelper);
@@ -50,6 +52,7 @@ public class TestWithOutput
 		Stopwatch = Stopwatch.StartNew();
 	}
 
+	/// <summary>Loads test configuration from the specified JSON file and user secrets.</summary>
 	protected static Configuration LoadConfiguration(string jsonFilePath)
 	{
 		var location = typeof(TestWithOutput).GetTypeInfo().Assembly.Location;
@@ -69,23 +72,29 @@ public class TestWithOutput
 		using (var sp = services.BuildServiceProvider())
 		{
 			var options = sp.GetService<IOptions<Configuration>>();
-			configuration = options.Value;
+			configuration = options!.Value;
 		}
 
 		return configuration;
 	}
 
+	/// <summary>Gets the logger used to write test output.</summary>
 	protected ILogger Logger { get; }
 
 	private Stopwatch Stopwatch { get; }
 
+	/// <summary>Gets the Unix timestamp representing 30 days before the test run started.</summary>
 	protected long StartEpoch { get; }
 
+	/// <summary>Gets the Unix timestamp representing the moment the test run started.</summary>
 	protected long EndEpoch { get; }
 
+	/// <summary>Gets the <see cref="AutoTask.Api.Client"/> used by tests.</summary>
 	protected Client Client { get; }
 
+	/// <summary>Gets the <see cref="AutoTask.Api.AutoTaskClient"/> used by tests.</summary>
 	protected AutoTaskClient AutoTaskClient { get; }
 
+	/// <summary>Asserts that the elapsed test time is within the specified number of seconds.</summary>
 	protected void AssertIsFast(int durationSeconds) => Assert.InRange(Stopwatch.ElapsedMilliseconds, 0, durationSeconds * 1000);
 }

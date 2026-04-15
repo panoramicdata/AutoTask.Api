@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace AutoTask.Api.Extensions;
 
+/// <summary>Extension methods for adding cancellation support to tasks.</summary>
 public static class TaskTimeoutExtensions
 {
 	/// <summary>
@@ -39,7 +40,7 @@ public static class TaskTimeoutExtensions
 	private static async System.Threading.Tasks.Task<T> WithCancellationSlow<T>(System.Threading.Tasks.Task<T> task, CancellationToken cancellationToken)
 	{
 		var tcs = new TaskCompletionSource<bool>();
-		using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
+		using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s!).TrySetResult(true), tcs))
 		{
 			if (task != await System.Threading.Tasks.Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
 			{
