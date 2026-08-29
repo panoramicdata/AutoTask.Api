@@ -1,4 +1,4 @@
-using AutoTask.Api.Exceptions;
+﻿using AutoTask.Api.Exceptions;
 using AutoTask.Api.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -58,7 +58,43 @@ public class Client : IDisposable, IClient
 			return _autoTaskClient;
 		}
 
-		var binding = new BasicHttpBinding
+		var endpointAddressUrl = await GetEndpointAddressUrlAsync(cancellationToken).ConfigureAwait(false);
+
+		// Create the endpoint address.
+		var ea = new EndpointAddress(endpointAddressUrl);
+
+		var autoTaskClient = new ATWSSoapClient(CreateServiceBinding(), ea);
+		autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
+		autoTaskClient.ClientCredentials.UserName.UserName = _username;
+		autoTaskClient.ClientCredentials.UserName.Password = _password;
+		return _autoTaskClient = autoTaskClient;
+	}
+
+	/// <summary>
+	/// Determines the zone-specific service URL, either from the configured server id or by
+	/// asking the well-known zone information endpoint.
+	/// </summary>
+	private async Task<string> GetEndpointAddressUrlAsync(CancellationToken cancellationToken)
+	{
+		if (_clientOptions.ServerId is not null)
+		{
+			return $"https://webservices{_clientOptions.ServerId}.autotask.net/ATServices/1.6/atws.asmx";
+		}
+
+		var endpoint = new EndpointAddress("https://webservices.autotask.net/ATServices/1.6/atws.asmx");
+		using var zoneInfoAutoTaskClient = new ATWSSoapClient(CreateZoneInfoBinding(), endpoint);
+
+		var zoneInfo = await zoneInfoAutoTaskClient
+			.getZoneInfoAsync(new getZoneInfoRequest(_username))
+			.WithCancellation(cancellationToken)
+			.ConfigureAwait(false);
+		zoneInfoAutoTaskClient.Close();
+		return zoneInfo.getZoneInfoResult.URL;
+	}
+
+	/// <summary>Creates the binding used for the small, unauthenticated zone information call.</summary>
+	private BasicHttpBinding CreateZoneInfoBinding()
+		=> new()
 		{
 			SendTimeout = new TimeSpan(0, 0, 0, 0, _clientOptions.SendTimeoutMs),
 			OpenTimeout = new TimeSpan(0, 0, 0, 0, _clientOptions.OpenTimeoutMs),
@@ -80,28 +116,15 @@ public class Client : IDisposable, IClient
 			}
 		};
 
-		string endpointAddressUrl;
-		if (_clientOptions.ServerId is null)
-		{
-			var endpoint = new EndpointAddress("https://webservices.autotask.net/ATServices/1.6/atws.asmx");
-			using var zoneInfoAutoTaskClient = new ATWSSoapClient(binding, endpoint);
-
-			var zoneInfo = await zoneInfoAutoTaskClient
-				.getZoneInfoAsync(new getZoneInfoRequest(_username))
-				.WithCancellation(cancellationToken)
-				.ConfigureAwait(false);
-			zoneInfoAutoTaskClient.Close();
-			endpointAddressUrl = zoneInfo.getZoneInfoResult.URL;
-		}
-		else
-		{
-			endpointAddressUrl = $"https://webservices{_clientOptions.ServerId}.autotask.net/ATServices/1.6/atws.asmx";
-		}
-
-		// Create the binding.
-		// must use BasicHttpBinding instead of WSHttpBinding
-		// otherwise a "SOAP header Action was not understood." is thrown.
-		var myBinding = new BasicHttpBinding
+	/// <summary>
+	/// Creates the binding used for authenticated calls.
+	/// Must use BasicHttpBinding instead of WSHttpBinding, otherwise a
+	/// "SOAP header Action was not understood." is thrown.
+	/// The maximum received message size must be set explicitly, otherwise the default
+	/// 65536 byte quota is exceeded.
+	/// </summary>
+	private static BasicHttpBinding CreateServiceBinding()
+		=> new()
 		{
 			Security =
 			{
@@ -111,21 +134,17 @@ public class Client : IDisposable, IClient
 			MaxReceivedMessageSize = 2147483647
 		};
 
-		// Must set the size otherwise
-		//The maximum message size quota for incoming messages (65536) has been exceeded. To increase the quota, use the MaxReceivedMessageSize property on the appropriate binding element.
-
-		// Create the endpoint address.
-		var ea = new EndpointAddress(endpointAddressUrl);
-
-		var autoTaskClient = new ATWSSoapClient(myBinding, ea);
-		autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
-		autoTaskClient.ClientCredentials.UserName.UserName = _username;
-		autoTaskClient.ClientCredentials.UserName.Password = _password;
-		return _autoTaskClient = autoTaskClient;
-	}
+	/// <summary>Returns field metadata for the specified AutoTask object type.</summary>
+	/// <param name="psObjectType">The AutoTask object type name.</param>
+	/// <returns>The field metadata.</returns>
+	public Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType)
+		=> GetFieldInfoAsync(psObjectType, CancellationToken.None);
 
 	/// <summary>Returns field metadata for the specified AutoTask object type.</summary>
-	public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType, CancellationToken cancellationToken = default)
+	/// <param name="psObjectType">The AutoTask object type name.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The field metadata.</returns>
+	public async Task<GetFieldInfoResponse> GetFieldInfoAsync(string psObjectType, CancellationToken cancellationToken)
 		=> await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.GetFieldInfoAsync(new GetFieldInfoRequest(_autotaskIntegrations, psObjectType))
 			.WithCancellation(cancellationToken)
@@ -133,9 +152,15 @@ public class Client : IDisposable, IClient
 
 	/// <summary>Executes a query against AutoTask and returns matching entities (up to 500 per page).</summary>
 	/// <param name="sXml">The query XML.</param>
+	/// <returns>The matching entities.</returns>
+	public Task<IEnumerable<Entity>> QueryAsync(string sXml)
+		=> QueryAsync(sXml, CancellationToken.None);
+
+	/// <summary>Executes a query against AutoTask and returns matching entities (up to 500 per page).</summary>
+	/// <param name="sXml">The query XML.</param>
 	/// <param name="cancellationToken">A token to cancel the operation.</param>
 	/// <returns>The matching entities.</returns>
-	public async Task<IEnumerable<Entity>> QueryAsync(string sXml, CancellationToken cancellationToken = default)
+	public async Task<IEnumerable<Entity>> QueryAsync(string sXml, CancellationToken cancellationToken)
 	{
 		// this example will not handle the 500 results limitation.
 		// AutoTask only returns up to 500 results in a response. if there are more you must query again for the next 500.
@@ -159,7 +184,16 @@ public class Client : IDisposable, IClient
 	}
 
 	/// <summary>Returns all entities matching the supplied query XML, auto-paging beyond the 500-record limit.</summary>
-	public async Task<IEnumerable<Entity>> GetAllAsync(string sXml, CancellationToken cancellationToken = default)
+	/// <param name="sXml">The query XML.</param>
+	/// <returns>The matching entities.</returns>
+	public Task<IEnumerable<Entity>> GetAllAsync(string sXml)
+		=> GetAllAsync(sXml, CancellationToken.None);
+
+	/// <summary>Returns all entities matching the supplied query XML, auto-paging beyond the 500-record limit.</summary>
+	/// <param name="sXml">The query XML.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The matching entities.</returns>
+	public async Task<IEnumerable<Entity>> GetAllAsync(string sXml, CancellationToken cancellationToken)
 	{
 		var list = new List<Entity>();
 
@@ -200,7 +234,16 @@ public class Client : IDisposable, IClient
 		=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
 	/// <summary>Creates a new entity in AutoTask.</summary>
-	public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
+	/// <param name="entity">The entity to create.</param>
+	/// <returns>The created entity.</returns>
+	public Task<Entity> CreateAsync(Entity entity)
+		=> CreateAsync(entity, CancellationToken.None);
+
+	/// <summary>Creates a new entity in AutoTask.</summary>
+	/// <param name="entity">The entity to create.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The created entity.</returns>
+	public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken)
 	{
 		var createRequest = new createRequest(_autotaskIntegrations, new[] { entity });
 		var createResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -230,7 +273,14 @@ public class Client : IDisposable, IClient
 	}
 
 	/// <summary>Deletes an entity from AutoTask.</summary>
-	public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken = default)
+	/// <param name="entity">The entity to delete.</param>
+	public System.Threading.Tasks.Task DeleteAsync(Entity entity)
+		=> DeleteAsync(entity, CancellationToken.None);
+
+	/// <summary>Deletes an entity from AutoTask.</summary>
+	/// <param name="entity">The entity to delete.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken)
 	{
 		var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
 		var deleteResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -257,11 +307,29 @@ public class Client : IDisposable, IClient
 	}
 
 	/// <summary>Updates an existing entity in AutoTask.</summary>
-	public async Task<Entity> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
-	=> (await UpdateAsync(new[] { entity }).ConfigureAwait(false)).Single();
+	/// <param name="entity">The entity to update.</param>
+	/// <returns>The updated entity.</returns>
+	public Task<Entity> UpdateAsync(Entity entity)
+		=> UpdateAsync(entity, CancellationToken.None);
+
+	/// <summary>Updates an existing entity in AutoTask.</summary>
+	/// <param name="entity">The entity to update.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The updated entity.</returns>
+	public async Task<Entity> UpdateAsync(Entity entity, CancellationToken cancellationToken)
+		=> (await UpdateAsync(new[] { entity }, cancellationToken).ConfigureAwait(false)).Single();
 
 	/// <summary>Updates multiple existing entities in AutoTask.</summary>
-	public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken = default)
+	/// <param name="entityArray">The entities to update.</param>
+	/// <returns>The updated entities.</returns>
+	public Task<Entity[]> UpdateAsync(Entity[] entityArray)
+		=> UpdateAsync(entityArray, CancellationToken.None);
+
+	/// <summary>Updates multiple existing entities in AutoTask.</summary>
+	/// <param name="entityArray">The entities to update.</param>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The updated entities.</returns>
+	public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken)
 	{
 		var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
 		var updateResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -290,7 +358,14 @@ public class Client : IDisposable, IClient
 	}
 
 	/// <summary>Returns the WSDL version of the AutoTask web service.</summary>
-	public async Task<string> GetWsdlVersion(CancellationToken cancellationToken = default)
+	/// <returns>The WSDL version.</returns>
+	public Task<string> GetWsdlVersion()
+		=> GetWsdlVersion(CancellationToken.None);
+
+	/// <summary>Returns the WSDL version of the AutoTask web service.</summary>
+	/// <param name="cancellationToken">A token to cancel the operation.</param>
+	/// <returns>The WSDL version.</returns>
+	public async Task<string> GetWsdlVersion(CancellationToken cancellationToken)
 	{
 		var getWsdlVersionResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.GetWsdlVersionAsync(new GetWsdlVersionRequest(_autotaskIntegrations))
@@ -304,34 +379,48 @@ public class Client : IDisposable, IClient
 	/// <summary>Releases managed resources when <paramref name="disposing"/> is <see langword="true"/>.</summary>
 	protected virtual void Dispose(bool disposing)
 	{
-		if (!disposed)
+		if (disposed)
 		{
-			if (disposing)
-			{
-				try
-				{
-					_autoTaskClient?.Close();
-				}
-				catch (CommunicationException)
-				{
-					_autoTaskClient?.Abort();
-				}
-				catch (TimeoutException)
-				{
-					_autoTaskClient?.Abort();
-				}
-				catch
-				{
-					_autoTaskClient?.Abort();
-					throw;
-				}
-			}
+			return;
+		}
 
-			disposed = true;
+		if (disposing)
+		{
+			CloseOrAbortClient();
+		}
+
+		disposed = true;
+	}
+
+	/// <summary>
+	/// Closes the SOAP client, falling back to aborting it if a graceful close is not possible.
+	/// </summary>
+	private void CloseOrAbortClient()
+	{
+		try
+		{
+			_autoTaskClient?.Close();
+		}
+		catch (CommunicationException)
+		{
+			_autoTaskClient?.Abort();
+		}
+		catch (TimeoutException)
+		{
+			_autoTaskClient?.Abort();
+		}
+		catch
+		{
+			_autoTaskClient?.Abort();
+			throw;
 		}
 	}
 
 	/// <inheritdoc/>
-	public void Dispose() => Dispose(true);
+	public void Dispose()
+	{
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
 	#endregion
 }

@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 # This script will publish to nuget using the api key in nuget-api-key.txt in the same folder.
 # The api key issued by nuget.org should ideally only have permissions to update a single package
@@ -12,7 +12,7 @@ if(-not (Test-Path($apiKeyFilename))){
 $apiKey = Get-Content $apiKeyFilename;
 
 # Getting changes into master branch
-Write-Host "Fetching latest commits..."
+Write-Information -InformationAction Continue "Fetching latest commits..."
 &git fetch
 
 $branch= &git rev-parse --abbrev-ref HEAD
@@ -25,24 +25,24 @@ if ($branch -ne "master") {
 	$result = $host.ui.PromptForChoice($title, $message, $options, 0)
 	switch ($result)
    {
-		0 { Write-Host "Proceeding..." }
-		1 { Write-Host "ABORTED."; exit 1; }
+		0 { Write-Information -InformationAction Continue "Proceeding..." }
+		1 { Write-Information -InformationAction Continue "ABORTED."; exit 1; }
 	}
 
 	try {
-		Write-Host "Checking out master..."
+		Write-Information -InformationAction Continue "Checking out master..."
 		&git checkout master
 		if (-not $?) {throw "Error with git checkout"}
 
-		Write-Host "Pulling..."
+		Write-Information -InformationAction Continue "Pulling..."
 		&git pull
 		if (-not $?) {throw "Error with git pull"}
 
-		Write-Host "Merging $branch into master..."
+		Write-Information -InformationAction Continue "Merging $branch into master..."
 		&git merge $branch --no-edit
 		if (-not $?) {throw "Error with git merge"}
 
-		Write-Host "Pushing master..."
+		Write-Information -InformationAction Continue "Pushing master..."
 		&git push
 		if (-not $?) {throw "Error with git push"}
 	}
@@ -50,7 +50,7 @@ if ($branch -ne "master") {
 	{
 		# If there was a problem and we were not on master then switch back
 		if ($branch -ne "master") {
-			Write-Host "Switching back to $branch branch"
+			Write-Information -InformationAction Continue "Switching back to $branch branch"
 			&git checkout $branch
 		}
 		exit 1;
@@ -72,7 +72,7 @@ try {
 	dotnet pack -c Release
 
 	$mostRecentPackage = Get-ChildItem bin\Release\*.nupkg | Sort-Object LastWriteTime | Select-Object -last 1
-	Write-Host "Publishing $mostRecentPackage..."
+	Write-Information -InformationAction Continue "Publishing $mostRecentPackage..."
 	# If you don't have nuget.exe - download from https://www.nuget.org/downloads and place in "C:\Users\xxx\AppData\Local\Microsoft\WindowsApps"
 	nuget.exe push -Source https://api.nuget.org/v3/index.json -ApiKey $apiKey "$mostRecentPackage"
 }
@@ -80,7 +80,7 @@ finally
 {
 	# If we were not on master then switch back
 	if ($branch -ne "master") {
-		Write-Host "Switching back to $branch branch"
+		Write-Information -InformationAction Continue "Switching back to $branch branch"
 		&git checkout $branch
 	}
 }

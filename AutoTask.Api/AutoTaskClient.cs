@@ -125,33 +125,15 @@ public class AutoTaskClient : IDisposable
 		return queryResponse.queryResult.EntityResults.Cast<T>().ToList();
 	}
 
-	private string GetQueryString(Filter filter)
+	private static string GetQueryString(Filter filter)
 		=> filter == null || filter.Items.Count == 0
-		? $"<field>id<expression op=\"{GetOperatorString(Operator.GreaterThan)}\">0</expression></field>"
-		: $"<condition operator=\"and\">{string.Concat(filter.Items.Select(fi => $"<field{(fi.Field.StartsWith(UDFPrefix) ? " udf=\"true\"" : string.Empty)}>{(fi.Field.StartsWith(UDFPrefix) ? fi.Field.Substring(UDFPrefix.Length) : fi.Field)}<expression op=\"{GetOperatorString(fi.Operator)}\">{fi.Value}</expression></field>"))}</condition>";
-
-	private static object GetOperatorString(Operator @operator)
-		=> @operator switch
-		{
-			Operator.BeginsWith or
-			Operator.EndsWith or
-			Operator.Like or
-			Operator.NotLike or
-			Operator.GreaterThanOrEquals or
-			Operator.LessThanOrEquals or
-			Operator.GreaterThan or
-			Operator.LessThan or
-			Operator.Equals
-				=> @operator.ToString().ToLowerInvariant(),
-			Operator.NotEquals => "notequal",
-				_ => throw new NotSupportedException($"{@operator} not supported.")
-		};
+		? $"<field>id<expression op=\"{Operator.GreaterThan.ToQueryXmlOperator()}\">0</expression></field>"
+		: $"<condition operator=\"and\">{string.Concat(filter.Items.Select(fi => $"<field{(fi.Field.StartsWith(UDFPrefix) ? " udf=\"true\"" : string.Empty)}>{(fi.Field.StartsWith(UDFPrefix) ? fi.Field.Substring(UDFPrefix.Length) : fi.Field)}<expression op=\"{fi.Operator.ToQueryXmlOperator()}\">{fi.Value}</expression></field>"))}</condition>";
 
 	/// <summary>Returns ticket notes matching the supplied filter.</summary>
 	public async Task<List<JObject>> GetIssueNotesAsync(Filter filter)
 		=> (await GetAsync<TicketNote>(filter).ConfigureAwait(false))
-			.ConvertAll(account => GetFilteredObject(account, filter))
-;
+			.ConvertAll(account => GetFilteredObject(account, filter));
 
 	/// <summary>Returns the AutoTask configuration item ID for the supplied lookup value.</summary>
 	public string CiLookup(string lookupValue)

@@ -55,7 +55,7 @@ public class QueryTests : TestWithOutput
 	public async System.Threading.Tasks.Task Client_Query()
 	{
 		var result = await Client
-			.GetAllAsync("<badsxml />");
+			.GetAllAsync("<badsxml />", TestContext.Current.CancellationToken);
 		Assert.NotNull(result);
 	}
 }

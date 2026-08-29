@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutoTask.Api.Extensions;
@@ -65,6 +66,19 @@ public static class TaskTimeoutExtensions
 	}
 }
 
-internal struct EmptyStruct
+/// <summary>
+/// A placeholder value type used where a generic argument is required but carries no information.
+/// All instances are equal to one another.
+/// </summary>
+internal readonly struct EmptyStruct : IEquatable<EmptyStruct>
 {
+	public bool Equals(EmptyStruct other) => true;
+
+	public override bool Equals(object? obj) => obj is EmptyStruct;
+
+	public override int GetHashCode() => 0;
+
+	public static bool operator ==(EmptyStruct left, EmptyStruct right) => true;
+
+	public static bool operator !=(EmptyStruct left, EmptyStruct right) => false;
 }

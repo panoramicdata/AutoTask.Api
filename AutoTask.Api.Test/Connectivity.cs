@@ -1,4 +1,4 @@
-using AutoTask.Api.Filters;
+﻿using AutoTask.Api.Filters;
 using System.Collections.Generic;
 using Xunit;
 
@@ -18,7 +18,9 @@ public class Connectivity : TestWithOutput
 	public async System.Threading.Tasks.Task BasicTest_Connects()
 	{
 		var result = await Client
-			.QueryAsync("<queryxml><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>");
+			.QueryAsync(
+				"<queryxml><entity>Account</entity><query><field>id<expression op=\"greaterthan\">0</expression></field></query></queryxml>",
+				TestContext.Current.CancellationToken);
 		Assert.NotNull(result);
 	}
 
@@ -27,7 +29,7 @@ public class Connectivity : TestWithOutput
 	public async System.Threading.Tasks.Task GetWsdlVersion_Succeeds()
 	{
 		var result = await Client
-			.GetWsdlVersion();
+			.GetWsdlVersion(TestContext.Current.CancellationToken);
 		Assert.NotNull(result);
 	}
 
@@ -36,7 +38,7 @@ public class Connectivity : TestWithOutput
 	public async System.Threading.Tasks.Task GetFieldInfo()
 	{
 		var result = await Client
-			.GetFieldInfoAsync(nameof(Account));
+			.GetFieldInfoAsync(nameof(Account), TestContext.Current.CancellationToken);
 		Assert.NotNull(result);
 	}
 

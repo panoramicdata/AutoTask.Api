@@ -14,10 +14,19 @@ public class Filter
 	{
 	}
 
+	/// <summary>Initializes a new <see cref="Filter"/> from a filter expression string.</summary>
+	/// <param name="filterString">A comma-delimited list of filter item expressions.</param>
+	public Filter(string? filterString)
+		: this(filterString, null)
+	{
+	}
+
 	/// <summary>Initializes a new <see cref="Filter"/> from filter and field expression strings.</summary>
+	/// <param name="filterString">A comma-delimited list of filter item expressions.</param>
+	/// <param name="fieldString">A comma-delimited list of field names to project.</param>
 	public Filter(
-		string? filterString = null,
-		string? fieldString = null
+		string? filterString,
+		string? fieldString
 		)
 	{
 		_itemString = filterString;
