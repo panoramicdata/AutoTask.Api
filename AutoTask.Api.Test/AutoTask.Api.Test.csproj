@@ -5,6 +5,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <UserSecretsId>a26d149e-2390-455d-b45d-40a90fc41ff9</UserSecretsId>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -18,13 +20,9 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" PrivateAssets="all" /></ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" PrivateAssets="all" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AutoTask.Api\AutoTask.Api.csproj" />
   </ItemGroup>

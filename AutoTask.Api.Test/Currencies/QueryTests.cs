@@ -1,7 +1,6 @@
 ﻿using AutoTask.Api.Filters;
 using System.Collections.Generic;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace AutoTask.Api.Test.Currencies;
 

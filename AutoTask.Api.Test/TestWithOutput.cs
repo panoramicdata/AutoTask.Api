@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace AutoTask.Api.Test;
 
