@@ -88,10 +88,10 @@ public class TestWithOutput
 	/// <summary>Gets the Unix timestamp representing the moment the test run started.</summary>
 	protected long EndEpoch { get; }
 
-	/// <summary>Gets the <see cref="AutoTask.Api.Client"/> used by tests.</summary>
+	/// <summary>Gets the <see cref="Api.Client"/> used by tests.</summary>
 	protected Client Client { get; }
 
-	/// <summary>Gets the <see cref="AutoTask.Api.AutoTaskClient"/> used by tests.</summary>
+	/// <summary>Gets the <see cref="Api.AutoTaskClient"/> used by tests.</summary>
 	protected AutoTaskClient AutoTaskClient { get; }
 
 	/// <summary>Asserts that the elapsed test time is within the specified number of seconds.</summary>

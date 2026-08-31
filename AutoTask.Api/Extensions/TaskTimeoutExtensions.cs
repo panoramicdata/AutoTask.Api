@@ -15,7 +15,7 @@ public static class TaskTimeoutExtensions
 	/// <param name="task">The task to wrap.</param>
 	/// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
 	/// <returns>The wrapping task.</returns>
-	public static System.Threading.Tasks.Task<T> WithCancellation<T>(this System.Threading.Tasks.Task<T> task, CancellationToken cancellationToken)
+	public static Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
 	{
 		if (!cancellationToken.CanBeCanceled || task.IsCompleted)
 		{
@@ -38,7 +38,7 @@ public static class TaskTimeoutExtensions
 	/// <param name="task">The task to wrap.</param>
 	/// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
 	/// <returns>The wrapping task.</returns>
-	private static async System.Threading.Tasks.Task<T> WithCancellationSlow<T>(System.Threading.Tasks.Task<T> task, CancellationToken cancellationToken)
+	private static async Task<T> WithCancellationSlow<T>(Task<T> task, CancellationToken cancellationToken)
 	{
 		var tcs = new TaskCompletionSource<bool>();
 		using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s!).TrySetResult(true), tcs))

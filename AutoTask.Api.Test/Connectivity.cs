@@ -5,13 +5,11 @@ using Xunit;
 namespace AutoTask.Api.Test;
 
 /// <summary>Connectivity tests that verify basic AutoTask API operations.</summary>
+/// <remarks>Initializes a new instance of <see cref="Connectivity"/>.</remarks>
 [Trait("Category", "Integration")]
-public class Connectivity : TestWithOutput
+public class Connectivity(ITestOutputHelper iTestOutputHelper) : TestWithOutput(iTestOutputHelper)
 {
-	/// <summary>Initializes a new instance of <see cref="Connectivity"/>.</summary>
-	public Connectivity(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
-	{
-	}
+
 
 	/// <summary>Verifies that a basic account query returns a non-null result.</summary>
 	[Fact]

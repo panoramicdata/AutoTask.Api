@@ -5,13 +5,11 @@ using Xunit;
 namespace AutoTask.Api.Test.Tickets;
 
 /// <summary>Query tests for the Ticket entity.</summary>
+/// <remarks>Initializes a new instance of <see cref="QueryTests"/>.</remarks>
 [Trait("Category", "Integration")]
-public class QueryTests : TestWithOutput
+public class QueryTests(ITestOutputHelper iTestOutputHelper) : TestWithOutput(iTestOutputHelper)
 {
-	/// <summary>Initializes a new instance of <see cref="QueryTests"/>.</summary>
-	public QueryTests(ITestOutputHelper iTestOutputHelper) : base(iTestOutputHelper)
-	{
-	}
+
 
 	/// <summary>Verifies that the AutoTask client can execute a filtered ticket query.</summary>
 	[Fact]

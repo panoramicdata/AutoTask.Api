@@ -5,15 +5,11 @@ using Xunit;
 namespace AutoTask.Api.Test;
 
 /// <summary>An <see cref="ILogger"/> implementation that writes to xUnit test output.</summary>
-public class XunitLogger : ILogger, IDisposable
+/// <remarks>Initializes a new instance of <see cref="XunitLogger"/> with the supplied xUnit output helper.</remarks>
+public class XunitLogger(ITestOutputHelper output) : ILogger, IDisposable
 {
-	private readonly ITestOutputHelper _output;
+	private readonly ITestOutputHelper _output = output;
 
-	/// <summary>Initializes a new instance of <see cref="XunitLogger"/> with the supplied xUnit output helper.</summary>
-	public XunitLogger(ITestOutputHelper output)
-	{
-		_output = output;
-	}
 
 	/// <inheritdoc/>
 	public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)

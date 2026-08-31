@@ -10,18 +10,13 @@ namespace AutoTask.Api;
 // https://stackoverflow.com/questions/12842014/logging-soap-raw-response-received-by-a-clientbase-object
 
 /// <summary>WCF endpoint behavior that logs AutoTask SOAP request and response messages.</summary>
-public class AutoTaskLogger : IEndpointBehavior, IClientMessageInspector
+/// <remarks>Initializes a new instance of <see cref="AutoTaskLogger"/> with the specified logger.</remarks>
+public class AutoTaskLogger(ILogger logger) : IEndpointBehavior, IClientMessageInspector
 {
-	private readonly ILogger _logger;
+	private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	internal string? LastResponse { get; private set; }
 	internal string? LastRequest { get; private set; }
-
-	/// <summary>Initializes a new instance of <see cref="AutoTaskLogger"/> with the specified logger.</summary>
-	public AutoTaskLogger(ILogger logger)
-	{
-		_logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
-	}
 
 	// IEndpointBehavior
 	/// <summary>Not used; no binding parameters are added.</summary>
@@ -51,7 +46,11 @@ public class AutoTaskLogger : IEndpointBehavior, IClientMessageInspector
 	public void AfterReceiveReply(ref Message reply, object correlationState)
 	{
 		LastResponse = reply.ToString();
-		_logger.LogTrace("AutoTask Response: " + LastResponse);
+
+		if(_logger.IsEnabled(LogLevel.Trace))
+		{
+			_logger.LogTrace("AutoTask Response: {Response}", LastResponse);
+		}
 	}
 
 	/// <summary>Captures the raw request message before it is sent and clears the last response.</summary>
@@ -60,7 +59,12 @@ public class AutoTaskLogger : IEndpointBehavior, IClientMessageInspector
 		LastRequest = request.ToString();
 		// Clear the response so it's clear that any response set is the response to the request
 		LastResponse = null;
-		_logger.LogDebug("AutoTask Request: " + LastRequest);
+
+		if(_logger.IsEnabled(LogLevel.Debug))
+		{
+			_logger.LogDebug("AutoTask Request: {Request}", LastRequest);
+		}
+
 		return null;
 	}
 }
