@@ -42,6 +42,9 @@ public class AutoTaskLogger(ILogger logger) : IEndpointBehavior, IClientMessageI
 	}
 
 	// IClientMessageInspector
+	// S3874: the 'ref Message' parameters below are mandated by IClientMessageInspector, which
+	// allows an inspector to substitute the message. The signature cannot be changed.
+#pragma warning disable S3874 // "out" and "ref" parameters should not be used
 	/// <summary>Captures the raw response message after it is received.</summary>
 	public void AfterReceiveReply(ref Message reply, object correlationState)
 	{
@@ -67,4 +70,5 @@ public class AutoTaskLogger(ILogger logger) : IEndpointBehavior, IClientMessageI
 
 		return null;
 	}
+#pragma warning restore S3874
 }

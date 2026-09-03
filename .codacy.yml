@@ -11,6 +11,6 @@ engines:
     enabled: true
     exclude_rules:
       # 'ref' parameters are mandated by IClientMessageInspector, which AutoTaskLogger
-      # implements; the signature cannot be changed. Also suppressed in code, in
-      # AutoTask.Api/GlobalSuppressions.cs, for analysers that honour attributes.
+      # implements; the signature cannot be changed. Also suppressed at the call site
+      # with '#pragma warning disable S3874' in AutoTask.Api/AutoTaskLogger.cs.
       - 'S3874'  # "out" and "ref" parameters should not be used

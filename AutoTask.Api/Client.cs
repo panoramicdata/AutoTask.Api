@@ -2,11 +2,11 @@
 using AutoTask.Api.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,6 +23,13 @@ public class Client : IDisposable, IClient
 	///	the query and filter by id value > the previous maximum id value retrieved.
 	/// </summary>
 	private const int AutoTaskPageSize = 500;
+
+	private static readonly JsonSerializerOptions EntityLogJsonSerializerOptions = new()
+	{
+		// Entity graphs from the AutoTask WSDL are flat, but a reference loop must never turn
+		// an error being logged into a second, more confusing exception.
+		ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+	};
 
 	private ATWSSoapClient? _autoTaskClient;
 	private bool disposed; // To detect redundant calls
@@ -233,6 +240,13 @@ public class Client : IDisposable, IClient
 	private string BuildExceptionMessage(string message)
 		=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
 
+	// Entities are serialised through an object-typed parameter deliberately: System.Text.Json
+	// serialises according to the declared type, so a Ticket passed as the abstract Entity would
+	// otherwise log only Entity's own members. Declaring the parameter as object makes
+	// System.Text.Json use the runtime type instead.
+	private static string ToJson(object? value)
+		=> JsonSerializer.Serialize(value, EntityLogJsonSerializerOptions);
+
 	/// <summary>Creates a new entity in AutoTask.</summary>
 	/// <param name="entity">The entity to create.</param>
 	/// <returns>The created entity.</returns>
@@ -258,7 +272,7 @@ public class Client : IDisposable, IClient
 			{
 				_logger.LogError($"Error {errorNum + 1}: {createResponse.createResult.Errors[errorNum].Message}");
 			}
-			_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
+			_logger.LogError("Entity: " + ToJson(entity));
 			var message = $"Errors occurred during creation of the AutoTask entity: {string.Join(";", createResponse.createResult.Errors.Select(e => e.Message))}";
 			throw new AutoTaskApiException(BuildExceptionMessage(message));
 		}
@@ -295,7 +309,7 @@ public class Client : IDisposable, IClient
 			{
 				_logger.LogError($"Error {errorNum + 1}: {deleteResponse.deleteResult.Errors[errorNum].Message}");
 			}
-			_logger.LogError("Entity: " + JsonConvert.SerializeObject(entity));
+			_logger.LogError("Entity: " + ToJson(entity));
 			throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during deletion of the AutoTask entity: {string.Join(";", deleteResponse.deleteResult.Errors.Select(e => e.Message))}"));
 		}
 
@@ -344,7 +358,7 @@ public class Client : IDisposable, IClient
 			{
 				_logger.LogError($"Error {errorNum + 1}: {updateResponse.updateResult.Errors[errorNum].Message}");
 			}
-			_logger.LogError("Entity: " + JsonConvert.SerializeObject(entityArray));
+			_logger.LogError("Entity: " + ToJson(entityArray.Cast<object>().ToList()));
 			throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during update of the AutoTask entity: {string.Join(";", updateResponse.updateResult.Errors.Select(e => e.Message))}"));
 		}
 

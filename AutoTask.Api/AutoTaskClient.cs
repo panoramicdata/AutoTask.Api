@@ -2,11 +2,12 @@
 using AutoTask.Api.Exceptions;
 using AutoTask.Api.Filters;
 using LogicMonitor.Integrator.Alerts.Exceptions;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace AutoTask.Api;
@@ -17,6 +18,13 @@ namespace AutoTask.Api;
 public class AutoTaskClient : IDisposable
 {
 	private const string UDFPrefix = "UDF ";
+
+	private static readonly JsonSerializerOptions EntityJsonSerializerOptions = new()
+	{
+		// Entity graphs from the AutoTask WSDL are flat, but a reference loop must never turn a
+		// successful query into an exception.
+		ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+	};
 	private readonly AutoTaskConfiguration _configuration;
 	private ATWSSoapClient? _clientDoNotUseDirectly;
 	private AutotaskIntegrations? _autotaskIntegrations;
@@ -82,35 +90,41 @@ public class AutoTaskClient : IDisposable
 	}
 
 	/// <summary>Returns accounts matching the supplied filter.</summary>
-	public async Task<List<JObject>> GetAccountsAsync(Filter filter)
+	public async Task<List<JsonObject>> GetAccountsAsync(Filter filter)
 		=> (await GetAsync<Account>(filter).ConfigureAwait(false))
 			.ConvertAll(account => GetFilteredObject(account, filter));
 
 	/// <summary>Returns tickets (issues) matching the supplied filter.</summary>
-	public async Task<List<JObject>> GetIssuesAsync(Filter filter)
+	public async Task<List<JsonObject>> GetIssuesAsync(Filter filter)
 		=> (await GetAsync<Ticket>(filter).ConfigureAwait(false))
 			.ConvertAll(account => GetFilteredObject(account, filter));
 
-	private JObject GetFilteredObject(object originalObject, Filter filter)
+	private static JsonObject GetFilteredObject(object originalObject, Filter filter)
 	{
 		var fields = filter?.Fields;
 		if (fields == null || fields.Count == 0)
 		{
-			return JObject.FromObject(originalObject);
+			return ToJsonNode(originalObject)!.AsObject();
 		}
 
-		// Based on the optional filter fields - build up the resulting JObject to only contain the requested fields
+		// Based on the optional filter fields - build up the resulting object to only contain the requested fields
 
-		var result = new JObject();
+		var result = new JsonObject();
 		foreach (var field in fields)
 		{
 			// Find any property matching the field
 			var objectProperty = originalObject.GetType().GetProperties().SingleOrDefault(property => string.Equals(property.Name, field, StringComparison.OrdinalIgnoreCase)) ?? throw new FilterFieldNotPresentException($"The filter field {field} is not present on the source object");
 			var v = objectProperty.GetValue(originalObject);
-			result[objectProperty.Name] = v == null ? null : JToken.FromObject(v);
+			result[objectProperty.Name] = v == null ? null : ToJsonNode(v);
 		}
 		return result;
 	}
+
+	// System.Text.Json serialises according to the declared type, so the runtime type is passed
+	// explicitly: entities arrive here as Entity or object, and their own members would
+	// otherwise be omitted.
+	private static JsonNode? ToJsonNode(object value)
+		=> JsonSerializer.SerializeToNode(value, value.GetType(), EntityJsonSerializerOptions);
 
 	/// <summary>Returns entities of type <typeparamref name="T"/> matching the supplied filter.</summary>
 	public async Task<List<T>> GetAsync<T>(Filter filter)
@@ -131,7 +145,7 @@ public class AutoTaskClient : IDisposable
 		: $"<condition operator=\"and\">{string.Concat(filter.Items.Select(fi => $"<field{(fi.Field.StartsWith(UDFPrefix) ? " udf=\"true\"" : string.Empty)}>{(fi.Field.StartsWith(UDFPrefix) ? fi.Field.Substring(UDFPrefix.Length) : fi.Field)}<expression op=\"{fi.Operator.ToQueryXmlOperator()}\">{fi.Value}</expression></field>"))}</condition>";
 
 	/// <summary>Returns ticket notes matching the supplied filter.</summary>
-	public async Task<List<JObject>> GetIssueNotesAsync(Filter filter)
+	public async Task<List<JsonObject>> GetIssueNotesAsync(Filter filter)
 		=> (await GetAsync<TicketNote>(filter).ConfigureAwait(false))
 			.ConvertAll(account => GetFilteredObject(account, filter));
 
