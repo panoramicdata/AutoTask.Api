@@ -175,10 +175,20 @@ public class Client : IDisposable, IClient
 		// - Get the highest id in a resultset and keep asking for items when the ID > the last observed value
 		// This post: https://github.com/opendns/autotask-php/issues/9 hints that you CAN rely on using the ID as a paging method
 		// as it is not possible to set the order by in the query and that the results always come back in id asc order.
-		var atwsResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
+		var atwsResponse = await QueryPageAsync(sXml, cancellationToken).ConfigureAwait(false);
+		return GetEntityResults(atwsResponse);
+	}
+
+	/// <summary>Executes a single query call, returning the raw response.</summary>
+	private async Task<queryResponse> QueryPageAsync(string sXml, CancellationToken cancellationToken)
+		=> await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.queryAsync(new queryRequest(_autotaskIntegrations, sXml))
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
+
+	/// <summary>Returns the entities from a query response, throwing if the query did not succeed.</summary>
+	private Entity[] GetEntityResults(queryResponse atwsResponse)
+	{
 		if (atwsResponse.queryResult.ReturnCode != 1)
 		{
 			var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
@@ -208,19 +218,9 @@ public class Client : IDisposable, IClient
 		queryResponse atwsResponse;
 		do
 		{
-			atwsResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
-				.queryAsync(new queryRequest(_autotaskIntegrations, amendedSxml))
-				.WithCancellation(cancellationToken)
-				.ConfigureAwait(false);
-			if (atwsResponse.queryResult.ReturnCode != 1)
-			{
-				var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
+			atwsResponse = await QueryPageAsync(amendedSxml, cancellationToken).ConfigureAwait(false);
 
-				throw new AutoTaskApiException(BuildExceptionMessage(message));
-			}
-			// Executed fine
-
-			list.AddRange(atwsResponse.queryResult.EntityResults);
+			list.AddRange(GetEntityResults(atwsResponse));
 
 			// We MAY have more data
 			// Determine the max id from the last page
@@ -247,6 +247,35 @@ public class Client : IDisposable, IClient
 	private static string ToJson(object? value)
 		=> JsonSerializer.Serialize(value, EntityLogJsonSerializerOptions);
 
+	/// <summary>
+	/// Logs and throws if a create, delete or update call reported errors.
+	/// </summary>
+	/// <param name="errors">The errors reported by AutoTask.</param>
+	/// <param name="presentParticiple">The operation, as in "an error {creating} the entity".</param>
+	/// <param name="noun">The operation, as in "errors occurred during {creation} of".</param>
+	/// <param name="loggedEntity">The entity or entities to log alongside the errors.</param>
+	private void ThrowOnErrors(
+		ATWSError[] errors,
+		string presentParticiple,
+		string noun,
+		object? loggedEntity)
+	{
+		if (errors.Length == 0)
+		{
+			return;
+		}
+
+		_logger.LogError($"There was an error {presentParticiple} the entity. {errors.Length} errors occurred.");
+		for (var errorNum = 0; errorNum < errors.Length; errorNum++)
+		{
+			_logger.LogError($"Error {errorNum + 1}: {errors[errorNum].Message}");
+		}
+		_logger.LogError("Entity: " + ToJson(loggedEntity));
+
+		throw new AutoTaskApiException(BuildExceptionMessage(
+			$"Errors occurred during {noun} of the AutoTask entity: {string.Join(";", errors.Select(e => e.Message))}"));
+	}
+
 	/// <summary>Creates a new entity in AutoTask.</summary>
 	/// <param name="entity">The entity to create.</param>
 	/// <returns>The created entity.</returns>
@@ -264,18 +293,7 @@ public class Client : IDisposable, IClient
 			.createAsync(createRequest)
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
-		var errorCount = createResponse.createResult.Errors.Length;
-		if (errorCount > 0)
-		{
-			_logger.LogError($"There was an error creating the entity. {errorCount} errors occurred.");
-			for (var errorNum = 0; errorNum < errorCount; errorNum++)
-			{
-				_logger.LogError($"Error {errorNum + 1}: {createResponse.createResult.Errors[errorNum].Message}");
-			}
-			_logger.LogError("Entity: " + ToJson(entity));
-			var message = $"Errors occurred during creation of the AutoTask entity: {string.Join(";", createResponse.createResult.Errors.Select(e => e.Message))}";
-			throw new AutoTaskApiException(BuildExceptionMessage(message));
-		}
+		ThrowOnErrors(createResponse.createResult.Errors, "creating", "creation", entity);
 
 		var createdEntity = createResponse?.createResult?.EntityResults?.FirstOrDefault();
 		_logger.LogDebug($"Successfully created entity with Id: {createdEntity?.id.ToString() ?? "UNKNOWN!"}");
@@ -301,22 +319,8 @@ public class Client : IDisposable, IClient
 			.deleteAsync(deleteRequest)
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
-		var errorCount = deleteResponse.deleteResult.Errors.Length;
-		if (errorCount > 0)
-		{
-			_logger.LogError($"There was an error deleting the entity. {errorCount} errors occurred.");
-			for (var errorNum = 0; errorNum < errorCount; errorNum++)
-			{
-				_logger.LogError($"Error {errorNum + 1}: {deleteResponse.deleteResult.Errors[errorNum].Message}");
-			}
-			_logger.LogError("Entity: " + ToJson(entity));
-			throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during deletion of the AutoTask entity: {string.Join(";", deleteResponse.deleteResult.Errors.Select(e => e.Message))}"));
-		}
+		ThrowOnErrors(deleteResponse.deleteResult.Errors, "deleting", "deletion", entity);
 
-		if (deleteResponse.deleteResult.Errors.Length != 0)
-		{
-			throw new AutoTaskApiException(BuildExceptionMessage($"Received the following error(s) while deleting: {string.Join("; ", deleteResponse.deleteResult.Errors.Select(e => e.Message))}."));
-		}
 		_logger.LogDebug($"Successfully deleted entity with Id: {entity?.id.ToString() ?? "UNKNOWN!"}");
 	}
 
@@ -350,17 +354,11 @@ public class Client : IDisposable, IClient
 			.updateAsync(updateRequest)
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
-		var errorCount = updateResponse.updateResult.Errors.Length;
-		if (errorCount > 0)
-		{
-			_logger.LogError($"There was an error updating the entity. {errorCount} errors occurred.");
-			for (var errorNum = 0; errorNum < errorCount; errorNum++)
-			{
-				_logger.LogError($"Error {errorNum + 1}: {updateResponse.updateResult.Errors[errorNum].Message}");
-			}
-			_logger.LogError("Entity: " + ToJson(entityArray.Cast<object>().ToList()));
-			throw new AutoTaskApiException(BuildExceptionMessage($"Errors occurred during update of the AutoTask entity: {string.Join(";", updateResponse.updateResult.Errors.Select(e => e.Message))}"));
-		}
+		ThrowOnErrors(
+			updateResponse.updateResult.Errors,
+			"updating",
+			"update",
+			entityArray.Cast<object>().ToList());
 
 		var updatedEntities = (updateResponse?.updateResult?.EntityResults) ?? throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entities."));
 		if (entityArray.Length != updatedEntities.Length)
