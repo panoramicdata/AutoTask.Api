@@ -12,6 +12,7 @@
     <File Path="LICENSE" />
     <File Path="Publish.ps1" />
     <File Path="SECURITY.md" />
+    <File Path=".codacy.yml" />
   </Folder>
   <Project Path="AutoTask.Api.Test/AutoTask.Api.Test.csproj" />
   <Project Path="AutoTask.Api/AutoTask.Api.csproj" />
