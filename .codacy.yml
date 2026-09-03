@@ -1,0 +1,16 @@
+---
+exclude_paths:
+  - '**/bin/**'
+  - '**/obj/**'
+  - 'TestResults/**'
+  - '**/Connected Services/**'  # WCF service reference metadata
+  - '**/Reference.cs'           # WCF generated proxy
+
+engines:
+  sonarcs:
+    enabled: true
+    exclude_rules:
+      # 'ref' parameters are mandated by IClientMessageInspector, which AutoTaskLogger
+      # implements; the signature cannot be changed. Also suppressed in code, in
+      # AutoTask.Api/GlobalSuppressions.cs, for analysers that honour attributes.
+      - 'S3874'  # "out" and "ref" parameters should not be used

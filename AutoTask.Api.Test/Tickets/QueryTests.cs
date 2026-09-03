@@ -1,6 +1,4 @@
-﻿using AutoTask.Api.Filters;
-using System.Collections.Generic;
-using Xunit;
+﻿using Xunit;
 
 namespace AutoTask.Api.Test.Tickets;
 
@@ -15,36 +13,10 @@ public class QueryTests(ITestOutputHelper iTestOutputHelper) : TestWithOutput(iT
 	[Fact]
 	public async System.Threading.Tasks.Task AutoTaskClient_Query()
 	{
+		// 29: Resolved, 34: Cancelled, 66: SD/NOC Responded
 		var result = await AutoTaskClient.GetAsync<Ticket>(
-			new Filter
-			{
-				Items = new List<FilterItem>
-				{
-					new FilterItem
-					{
-						Field = "UDF Problem Signature",
-						Operator = Operator.Equals,
-						Value = "LMD15169"
-					},
-					new FilterItem
-					{
-						Field = "ticketCategory",
-						Operator = Operator.Equals,
-						Value = "2"
-					},
-					new FilterItem
-					{
-						Field = "ticketType",
-						Operator = Operator.Equals,
-						Value = "2"
-					},
-					// new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "5" }, // Complete
-					new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "29" }, // Resolved
-					new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "34" }, // Cancelled
-					new FilterItem{Field = "Status", Operator = Operator.NotEquals, Value = "66" }, // SD/NOC Responded
-				}
-			}
-			);
+			TicketFilters.WithProblemSignature("LMD15169", "29", "34", "66"));
+
 		Assert.NotNull(result);
 	}
 
