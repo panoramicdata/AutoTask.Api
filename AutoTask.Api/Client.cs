@@ -1,4 +1,4 @@
-﻿using AutoTask.Api.Exceptions;
+using AutoTask.Api.Exceptions;
 using AutoTask.Api.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -222,19 +222,33 @@ public class Client : IDisposable, IClient
 
 			list.AddRange(GetEntityResults(atwsResponse));
 
-			// We MAY have more data
-			// Determine the max id from the last page
-			var last = atwsResponse.queryResult.EntityResults.LastOrDefault();
-			if (last == null)
+			if (!TryBuildNextPageQuery(sXml, atwsResponse, out amendedSxml))
 			{
 				break;
 			}
-			var lastId = last.id;
-			// Amend the sXml
-			amendedSxml = sXml.Replace("</query>", $"<condition operator=\"and\"><field>id<expression op=\"GreaterThan\">{lastId}</expression></field></condition></query>");
 		} while (atwsResponse.queryResult.EntityResults.Length == AutoTaskPageSize);
 
 		return list;
+	}
+
+	/// <summary>
+	/// Builds the paged query for the next page based on the last entity of the current page.
+	/// Returns false when there is no last entity to page from.
+	/// </summary>
+	private static bool TryBuildNextPageQuery(string sXml, queryResponse atwsResponse, out string amendedSxml)
+	{
+		// We MAY have more data
+		// Determine the max id from the last page
+		var last = atwsResponse.queryResult.EntityResults.LastOrDefault();
+		if (last == null)
+		{
+			amendedSxml = sXml;
+			return false;
+		}
+		var lastId = last.id;
+		// Amend the sXml
+		amendedSxml = sXml.Replace("</query>", $"<condition operator=\"and\"><field>id<expression op=\"GreaterThan\">{lastId}</expression></field></condition></query>");
+		return true;
 	}
 
 	private string BuildExceptionMessage(string message)
@@ -266,14 +280,21 @@ public class Client : IDisposable, IClient
 		}
 
 		_logger.LogError($"There was an error {presentParticiple} the entity. {errors.Length} errors occurred.");
-		for (var errorNum = 0; errorNum < errors.Length; errorNum++)
-		{
-			_logger.LogError($"Error {errorNum + 1}: {errors[errorNum].Message}");
-		}
+		LogEachError(errors);
 		_logger.LogError("Entity: " + ToJson(loggedEntity));
 
 		throw new AutoTaskApiException(BuildExceptionMessage(
 			$"Errors occurred during {noun} of the AutoTask entity: {string.Join(";", errors.Select(e => e.Message))}"));
+	}
+
+	/// <summary>Logs each individual AutoTask error in order.</summary>
+	/// <param name="errors">The errors reported by AutoTask.</param>
+	private void LogEachError(ATWSError[] errors)
+	{
+		for (var errorNum = 0; errorNum < errors.Length; errorNum++)
+		{
+			_logger.LogError($"Error {errorNum + 1}: {errors[errorNum].Message}");
+		}
 	}
 
 	/// <summary>Creates a new entity in AutoTask.</summary>
