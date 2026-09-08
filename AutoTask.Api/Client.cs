@@ -381,14 +381,40 @@ public class Client : IDisposable, IClient
 			"update",
 			entityArray.Cast<object>().ToList());
 
-		var updatedEntities = (updateResponse?.updateResult?.EntityResults) ?? throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entities."));
+		var updatedEntities = GetUpdatedEntities(updateResponse, entityArray);
+		LogUpdatedEntities(updatedEntities);
+		return updatedEntities;
+	}
+
+	/// <summary>
+	/// Extracts the updated entities from the update response, throwing if the response
+	/// is missing results or the returned entity count does not match the request.
+	/// </summary>
+	/// <param name="updateResponse">The raw update response from AutoTask.</param>
+	/// <param name="entityArray">The entities that were sent to be updated.</param>
+	/// <returns>The updated entities.</returns>
+	private Entity[] GetUpdatedEntities(updateResponse updateResponse, Entity[] entityArray)
+	{
+		var updatedEntities = updateResponse?.updateResult?.EntityResults ?? throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entities."));
+		ValidateUpdateEntityCount(entityArray, updatedEntities);
+		return updatedEntities;
+	}
+
+	/// <summary>Throws if the number of returned entities does not match the number sent.</summary>
+	/// <param name="entityArray">The entities that were sent to be updated.</param>
+	/// <param name="updatedEntities">The entities returned by AutoTask.</param>
+	private void ValidateUpdateEntityCount(Entity[] entityArray, Entity[] updatedEntities)
+	{
 		if (entityArray.Length != updatedEntities.Length)
 		{
 			throw new AutoTaskApiException(BuildExceptionMessage($"Did not receive the expected update entity count (expected {entityArray.Length}, received {updatedEntities.Length})."));
 		}
-		_logger.LogDebug($"Updated {updatedEntities.Length} {(updatedEntities.Length == 1 ? "entity" : "entities")}: ({string.Join(", ", updatedEntities.Select(e => e.id.ToString() ?? "?"))})");
-		return updatedEntities;
 	}
+
+	/// <summary>Logs the updated entities at debug level.</summary>
+	/// <param name="updatedEntities">The entities returned by AutoTask.</param>
+	private void LogUpdatedEntities(Entity[] updatedEntities)
+		=> _logger.LogDebug($"Updated {updatedEntities.Length} {(updatedEntities.Length == 1 ? "entity" : "entities")}: ({string.Join(", ", updatedEntities.Select(e => e.id.ToString() ?? "?"))})");
 
 	/// <summary>Returns the WSDL version of the AutoTask web service.</summary>
 	/// <returns>The WSDL version.</returns>
