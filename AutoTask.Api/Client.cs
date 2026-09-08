@@ -1,4 +1,4 @@
-using AutoTask.Api.Exceptions;
+﻿using AutoTask.Api.Exceptions;
 using AutoTask.Api.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,23 +23,14 @@ public class Client : IDisposable, IClient
 	/// </summary>
 	private const int AutoTaskPageSize = 500;
 
-	private static readonly JsonSerializerOptions EntityLogJsonSerializerOptions = new()
-	{
-		// Entity graphs from the AutoTask WSDL are flat, but a reference loop must never turn
-		// an error being logged into a second, more confusing exception.
-		ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-	};
-
-	private ATWSSoapClient? _autoTaskClient;
 	private bool disposed; // To detect redundant calls
 
 	internal AutoTaskLogger AutoTaskLogger { get; }
 
+	private readonly AtwsSoapClientProvider _atwsSoapClientProvider;
+	private readonly AutoTaskErrorReporter _errorReporter;
 	private readonly AutotaskIntegrations _autotaskIntegrations;
-	private readonly ClientOptions _clientOptions;
 	private readonly ILogger _logger;
-	private readonly string _username;
-	private readonly string _password;
 
 	/// <summary>Initializes a new AutoTask client with the supplied credentials and options.</summary>
 	public Client(
@@ -53,93 +43,16 @@ public class Client : IDisposable, IClient
 		_logger = logger ?? new NullLogger<Client>();
 		AutoTaskLogger = new AutoTaskLogger(_logger);
 		_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
-		_clientOptions = clientOptions ?? new ClientOptions();
-		_username = username;
-		_password = password;
+		_errorReporter = new AutoTaskErrorReporter(_logger, AutoTaskLogger);
+		_atwsSoapClientProvider = new AtwsSoapClientProvider(
+			username,
+			password,
+			clientOptions ?? new ClientOptions(),
+			AutoTaskLogger);
 	}
 
-	private async Task<ATWSSoapClient> GetATWSSoapClientAsync(CancellationToken cancellationToken)
-	{
-		if (_autoTaskClient != null)
-		{
-			return _autoTaskClient;
-		}
-
-		var endpointAddressUrl = await GetEndpointAddressUrlAsync(cancellationToken).ConfigureAwait(false);
-
-		// Create the endpoint address.
-		var ea = new EndpointAddress(endpointAddressUrl);
-
-		var autoTaskClient = new ATWSSoapClient(CreateServiceBinding(), ea);
-		autoTaskClient.Endpoint.EndpointBehaviors.Add(AutoTaskLogger);
-		autoTaskClient.ClientCredentials.UserName.UserName = _username;
-		autoTaskClient.ClientCredentials.UserName.Password = _password;
-		return _autoTaskClient = autoTaskClient;
-	}
-
-	/// <summary>
-	/// Determines the zone-specific service URL, either from the configured server id or by
-	/// asking the well-known zone information endpoint.
-	/// </summary>
-	private async Task<string> GetEndpointAddressUrlAsync(CancellationToken cancellationToken)
-	{
-		if (_clientOptions.ServerId is not null)
-		{
-			return $"https://webservices{_clientOptions.ServerId}.autotask.net/ATServices/1.6/atws.asmx";
-		}
-
-		var endpoint = new EndpointAddress("https://webservices.autotask.net/ATServices/1.6/atws.asmx");
-		using var zoneInfoAutoTaskClient = new ATWSSoapClient(CreateZoneInfoBinding(), endpoint);
-
-		var zoneInfo = await zoneInfoAutoTaskClient
-			.getZoneInfoAsync(new getZoneInfoRequest(_username))
-			.WithCancellation(cancellationToken)
-			.ConfigureAwait(false);
-		zoneInfoAutoTaskClient.Close();
-		return zoneInfo.getZoneInfoResult.URL;
-	}
-
-	/// <summary>Creates the binding used for the small, unauthenticated zone information call.</summary>
-	private BasicHttpBinding CreateZoneInfoBinding()
-		=> new()
-		{
-			SendTimeout = new TimeSpan(0, 0, 0, 0, _clientOptions.SendTimeoutMs),
-			OpenTimeout = new TimeSpan(0, 0, 0, 0, _clientOptions.OpenTimeoutMs),
-			MaxReceivedMessageSize = 10000,
-			ReaderQuotas =
-			{
-				MaxStringContentLength = 10000,
-				MaxDepth = 10000,
-				MaxArrayLength = 10000
-			},
-			Security = new BasicHttpSecurity
-			{
-				Mode = BasicHttpSecurityMode.Transport,
-				Transport = new HttpTransportSecurity
-				{
-					ClientCredentialType = HttpClientCredentialType.None,
-					ProxyCredentialType = HttpProxyCredentialType.None,
-				}
-			}
-		};
-
-	/// <summary>
-	/// Creates the binding used for authenticated calls.
-	/// Must use BasicHttpBinding instead of WSHttpBinding, otherwise a
-	/// "SOAP header Action was not understood." is thrown.
-	/// The maximum received message size must be set explicitly, otherwise the default
-	/// 65536 byte quota is exceeded.
-	/// </summary>
-	private static BasicHttpBinding CreateServiceBinding()
-		=> new()
-		{
-			Security =
-			{
-				Mode = BasicHttpSecurityMode.Transport,
-				Transport = { ClientCredentialType = HttpClientCredentialType.Basic }
-			},
-			MaxReceivedMessageSize = 2147483647
-		};
+	private Task<ATWSSoapClient> GetATWSSoapClientAsync(CancellationToken cancellationToken)
+		=> _atwsSoapClientProvider.GetAsync(cancellationToken);
 
 	/// <summary>Returns field metadata for the specified AutoTask object type.</summary>
 	/// <param name="psObjectType">The AutoTask object type name.</param>
@@ -193,7 +106,7 @@ public class Client : IDisposable, IClient
 		{
 			var message = atwsResponse.queryResult.Errors.Select(e => e.Message).ToHumanReadableString(delimitLastWith: " and ");
 
-			throw new AutoTaskApiException(BuildExceptionMessage(message));
+			throw new AutoTaskApiException(_errorReporter.Describe(message));
 		}
 		// Executed fine
 
@@ -251,52 +164,6 @@ public class Client : IDisposable, IClient
 		return true;
 	}
 
-	private string BuildExceptionMessage(string message)
-		=> $"Message: {message}\r\nLastAutoTaskRequest: {AutoTaskLogger.LastRequest ?? "No Request"}\r\nLastAutoTaskResponse: {AutoTaskLogger.LastResponse ?? "No Response"}";
-
-	// Entities are serialised through an object-typed parameter deliberately: System.Text.Json
-	// serialises according to the declared type, so a Ticket passed as the abstract Entity would
-	// otherwise log only Entity's own members. Declaring the parameter as object makes
-	// System.Text.Json use the runtime type instead.
-	private static string ToJson(object? value)
-		=> JsonSerializer.Serialize(value, EntityLogJsonSerializerOptions);
-
-	/// <summary>
-	/// Logs and throws if a create, delete or update call reported errors.
-	/// </summary>
-	/// <param name="errors">The errors reported by AutoTask.</param>
-	/// <param name="presentParticiple">The operation, as in "an error {creating} the entity".</param>
-	/// <param name="noun">The operation, as in "errors occurred during {creation} of".</param>
-	/// <param name="loggedEntity">The entity or entities to log alongside the errors.</param>
-	private void ThrowOnErrors(
-		ATWSError[] errors,
-		string presentParticiple,
-		string noun,
-		object? loggedEntity)
-	{
-		if (errors.Length == 0)
-		{
-			return;
-		}
-
-		_logger.LogError($"There was an error {presentParticiple} the entity. {errors.Length} errors occurred.");
-		LogEachError(errors);
-		_logger.LogError("Entity: " + ToJson(loggedEntity));
-
-		throw new AutoTaskApiException(BuildExceptionMessage(
-			$"Errors occurred during {noun} of the AutoTask entity: {string.Join(";", errors.Select(e => e.Message))}"));
-	}
-
-	/// <summary>Logs each individual AutoTask error in order.</summary>
-	/// <param name="errors">The errors reported by AutoTask.</param>
-	private void LogEachError(ATWSError[] errors)
-	{
-		for (var errorNum = 0; errorNum < errors.Length; errorNum++)
-		{
-			_logger.LogError($"Error {errorNum + 1}: {errors[errorNum].Message}");
-		}
-	}
-
 	/// <summary>Creates a new entity in AutoTask.</summary>
 	/// <param name="entity">The entity to create.</param>
 	/// <returns>The created entity.</returns>
@@ -309,19 +176,19 @@ public class Client : IDisposable, IClient
 	/// <returns>The created entity.</returns>
 	public async Task<Entity> CreateAsync(Entity entity, CancellationToken cancellationToken)
 	{
+		ArgumentNullException.ThrowIfNull(entity);
+
 		var createRequest = new createRequest(_autotaskIntegrations, new[] { entity });
 		var createResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.createAsync(createRequest)
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
-		ThrowOnErrors(createResponse.createResult.Errors, "creating", "creation", entity);
+		_errorReporter.ThrowOnErrors(createResponse.createResult.Errors, "creating", "creation", entity);
 
-		var createdEntity = createResponse?.createResult?.EntityResults?.FirstOrDefault();
-		_logger.LogDebug($"Successfully created entity with Id: {createdEntity?.id.ToString() ?? "UNKNOWN!"}");
-		if (createdEntity == null)
-		{
-			throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after creating the AutoTask entity."));
-		}
+		var createdEntity = createResponse.createResult.EntityResults?.FirstOrDefault()
+			?? throw new AutoTaskApiException(_errorReporter.Describe("Did not get a result back after creating the AutoTask entity."));
+
+		_logger.LogDebug($"Successfully created entity with Id: {createdEntity.id}");
 		return createdEntity;
 	}
 
@@ -335,14 +202,16 @@ public class Client : IDisposable, IClient
 	/// <param name="cancellationToken">A token to cancel the operation.</param>
 	public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken)
 	{
+		ArgumentNullException.ThrowIfNull(entity);
+
 		var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
 		var deleteResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.deleteAsync(deleteRequest)
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
-		ThrowOnErrors(deleteResponse.deleteResult.Errors, "deleting", "deletion", entity);
+		_errorReporter.ThrowOnErrors(deleteResponse.deleteResult.Errors, "deleting", "deletion", entity);
 
-		_logger.LogDebug($"Successfully deleted entity with Id: {entity?.id.ToString() ?? "UNKNOWN!"}");
+		_logger.LogDebug($"Successfully deleted entity with Id: {entity.id}");
 	}
 
 	/// <summary>Updates an existing entity in AutoTask.</summary>
@@ -370,19 +239,22 @@ public class Client : IDisposable, IClient
 	/// <returns>The updated entities.</returns>
 	public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken)
 	{
+		ArgumentNullException.ThrowIfNull(entityArray);
+
 		var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
 		var updateResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.updateAsync(updateRequest)
 			.WithCancellation(cancellationToken)
 			.ConfigureAwait(false);
-		ThrowOnErrors(
+		_errorReporter.ThrowOnErrors(
 			updateResponse.updateResult.Errors,
 			"updating",
 			"update",
 			entityArray.Cast<object>().ToList());
 
 		var updatedEntities = GetUpdatedEntities(updateResponse, entityArray);
-		LogUpdatedEntities(updatedEntities);
+
+		_logger.LogDebug($"Updated {updatedEntities.Length} {(updatedEntities.Length == 1 ? "entity" : "entities")}: ({string.Join(", ", updatedEntities.Select(e => e.id))})");
 		return updatedEntities;
 	}
 
@@ -395,26 +267,16 @@ public class Client : IDisposable, IClient
 	/// <returns>The updated entities.</returns>
 	private Entity[] GetUpdatedEntities(updateResponse updateResponse, Entity[] entityArray)
 	{
-		var updatedEntities = updateResponse?.updateResult?.EntityResults ?? throw new AutoTaskApiException(BuildExceptionMessage("Did not get a result back after updating the AutoTask entities."));
-		ValidateUpdateEntityCount(entityArray, updatedEntities);
-		return updatedEntities;
-	}
+		var updatedEntities = updateResponse.updateResult.EntityResults
+			?? throw new AutoTaskApiException(_errorReporter.Describe("Did not get a result back after updating the AutoTask entities."));
 
-	/// <summary>Throws if the number of returned entities does not match the number sent.</summary>
-	/// <param name="entityArray">The entities that were sent to be updated.</param>
-	/// <param name="updatedEntities">The entities returned by AutoTask.</param>
-	private void ValidateUpdateEntityCount(Entity[] entityArray, Entity[] updatedEntities)
-	{
 		if (entityArray.Length != updatedEntities.Length)
 		{
-			throw new AutoTaskApiException(BuildExceptionMessage($"Did not receive the expected update entity count (expected {entityArray.Length}, received {updatedEntities.Length})."));
+			throw new AutoTaskApiException(_errorReporter.Describe($"Did not receive the expected update entity count (expected {entityArray.Length}, received {updatedEntities.Length})."));
 		}
-	}
 
-	/// <summary>Logs the updated entities at debug level.</summary>
-	/// <param name="updatedEntities">The entities returned by AutoTask.</param>
-	private void LogUpdatedEntities(Entity[] updatedEntities)
-		=> _logger.LogDebug($"Updated {updatedEntities.Length} {(updatedEntities.Length == 1 ? "entity" : "entities")}: ({string.Join(", ", updatedEntities.Select(e => e.id.ToString() ?? "?"))})");
+		return updatedEntities;
+	}
 
 	/// <summary>Returns the WSDL version of the AutoTask web service.</summary>
 	/// <returns>The WSDL version.</returns>
@@ -445,34 +307,10 @@ public class Client : IDisposable, IClient
 
 		if (disposing)
 		{
-			CloseOrAbortClient();
+			_atwsSoapClientProvider.Dispose();
 		}
 
 		disposed = true;
-	}
-
-	/// <summary>
-	/// Closes the SOAP client, falling back to aborting it if a graceful close is not possible.
-	/// </summary>
-	private void CloseOrAbortClient()
-	{
-		try
-		{
-			_autoTaskClient?.Close();
-		}
-		catch (CommunicationException)
-		{
-			_autoTaskClient?.Abort();
-		}
-		catch (TimeoutException)
-		{
-			_autoTaskClient?.Abort();
-		}
-		catch
-		{
-			_autoTaskClient?.Abort();
-			throw;
-		}
 	}
 
 	/// <inheritdoc/>
