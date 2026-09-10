@@ -262,12 +262,15 @@ public class Client : IDisposable, IClient
 	/// Extracts the updated entities from the update response, throwing if the response
 	/// is missing results or the returned entity count does not match the request.
 	/// </summary>
-	/// <param name="updateResponse">The raw update response from AutoTask.</param>
+	/// <param name="response">The raw update response from AutoTask.</param>
 	/// <param name="entityArray">The entities that were sent to be updated.</param>
 	/// <returns>The updated entities.</returns>
-	private Entity[] GetUpdatedEntities(updateResponse updateResponse, Entity[] entityArray)
+	// The parameter is deliberately not named after its type: in "updateResponse updateResponse"
+	// the member access below reads as static access on the generated type, and analysers
+	// conclude the parameter is never used (SonarCSharp S1172).
+	private Entity[] GetUpdatedEntities(updateResponse response, Entity[] entityArray)
 	{
-		var updatedEntities = updateResponse.updateResult.EntityResults
+		var updatedEntities = response.updateResult.EntityResults
 			?? throw new AutoTaskApiException(_errorReporter.Describe("Did not get a result back after updating the AutoTask entities."));
 
 		if (entityArray.Length != updatedEntities.Length)
