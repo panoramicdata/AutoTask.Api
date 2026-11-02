@@ -11,4 +11,7 @@ public class ClientOptions
 
 	/// <summary>Gets or sets the AutoTask server ID, or <see langword="null"/> to auto-detect via zone lookup.</summary>
 	public int? ServerId { get; set; }
+
+	/// <summary>Gets or sets whether the client refuses create, update and delete calls before sending them. Default is false.</summary>
+	public bool IsReadOnly { get; set; }
 }

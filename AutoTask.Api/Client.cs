@@ -31,6 +31,7 @@ public class Client : IDisposable, IClient
 	private readonly AutoTaskErrorReporter _errorReporter;
 	private readonly AutotaskIntegrations _autotaskIntegrations;
 	private readonly ILogger _logger;
+	private readonly ClientOptions _clientOptions;
 
 	/// <summary>Initializes a new AutoTask client with the supplied credentials and options.</summary>
 	public Client(
@@ -40,6 +41,7 @@ public class Client : IDisposable, IClient
 		ILogger? logger = default,
 		ClientOptions? clientOptions = default)
 	{
+		_clientOptions = clientOptions ?? new ClientOptions();
 		_logger = logger ?? new NullLogger<Client>();
 		AutoTaskLogger = new AutoTaskLogger(_logger);
 		_autotaskIntegrations = new AutotaskIntegrations { IntegrationCode = integrationCode };
@@ -47,8 +49,16 @@ public class Client : IDisposable, IClient
 		_atwsSoapClientProvider = new AtwsSoapClientProvider(
 			username,
 			password,
-			clientOptions ?? new ClientOptions(),
+			_clientOptions,
 			AutoTaskLogger);
+	}
+
+	private void ThrowIfReadOnly(string operation)
+	{
+		if (_clientOptions.IsReadOnly)
+		{
+			throw new InvalidOperationException($"{operation} is refused because ClientOptions.IsReadOnly is set.");
+		}
 	}
 
 	private Task<ATWSSoapClient> GetATWSSoapClientAsync(CancellationToken cancellationToken)
@@ -178,6 +188,8 @@ public class Client : IDisposable, IClient
 	{
 		ArgumentNullException.ThrowIfNull(entity);
 
+		ThrowIfReadOnly(nameof(CreateAsync));
+
 		var createRequest = new createRequest(_autotaskIntegrations, new[] { entity });
 		var createResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
 			.createAsync(createRequest)
@@ -203,6 +215,8 @@ public class Client : IDisposable, IClient
 	public async System.Threading.Tasks.Task DeleteAsync(Entity entity, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(entity);
+
+		ThrowIfReadOnly(nameof(DeleteAsync));
 
 		var deleteRequest = new deleteRequest(_autotaskIntegrations, new[] { entity });
 		var deleteResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
@@ -240,6 +254,8 @@ public class Client : IDisposable, IClient
 	public async Task<Entity[]> UpdateAsync(Entity[] entityArray, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(entityArray);
+
+		ThrowIfReadOnly(nameof(UpdateAsync));
 
 		var updateRequest = new updateRequest(_autotaskIntegrations, entityArray);
 		var updateResponse = await (await GetATWSSoapClientAsync(cancellationToken).ConfigureAwait(false))
