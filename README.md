@@ -8,6 +8,8 @@
 
 A .NET client for the Autotask Web Services (SOAP) API, version 1.6.
 
+Supports .NET 11.0.
+
 ## Installation
 
 ```
