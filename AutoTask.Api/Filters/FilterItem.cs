@@ -32,7 +32,7 @@ public class FilterItem
 	public FilterItem(string text)
 	{
 		var key = Operators.Keys.FirstOrDefault(k => text.Contains(k)) ?? throw new ArgumentException("No operator present.");
-		var items = text.Split(new string[] { key }, StringSplitOptions.None);
+		var items = text.Split(key, StringSplitOptions.None);
 		Field = items[0];
 		Value = items[1];
 		Operator = Operators[key];
