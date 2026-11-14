@@ -6,6 +6,8 @@
 
 [![Nuget](https://img.shields.io/nuget/v/AutoTask.Api)](https://www.nuget.org/packages/AutoTask.Api/)
 
+> **Need help with APIs or .NET?** Panoramic Data are experts in APIs and .NET, and we can help with your development. [Contact us](https://www.panoramicdata.com/contact-us) or see our [software services](https://www.panoramicdata.com/services/software).
+
 A .NET client for the Autotask Web Services (SOAP) API, version 1.6.
 
 Supports .NET 11.0.
