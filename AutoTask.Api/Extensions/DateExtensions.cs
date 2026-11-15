@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace AutoTask.Api.Extensions;
 
@@ -8,11 +7,21 @@ public static class DateExtensions
 {
 	private const string AutoTaskDateFormat = "yyyy-MM-ddTHH:mm:ss.fff";
 
-	// Windows uses "Eastern Standard Time", Linux uses "EST"
-	private static readonly TimeZoneInfo TimeZoneInfoEst =
-		TimeZoneInfo.GetSystemTimeZones().Any(x => x.Id == "Eastern Standard Time") ?
-		TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time") :
-		TimeZoneInfo.FindSystemTimeZoneById("EST");
+	// Windows uses "Eastern Standard Time"; Linux uses IANA ids, and some images ship no "EST" file.
+	private static readonly TimeZoneInfo TimeZoneInfoEst = FindEasternTimeZone();
+
+	private static TimeZoneInfo FindEasternTimeZone()
+	{
+		foreach (var id in new[] { "Eastern Standard Time", "America/New_York", "EST" })
+		{
+			if (TimeZoneInfo.TryFindSystemTimeZoneById(id, out var timeZone))
+			{
+				return timeZone;
+			}
+		}
+
+		throw new TimeZoneNotFoundException("No Eastern time zone is available on this machine.");
+	}
 
 	/// <summary>Converts the <see cref="DateTimeOffset"/> to an AutoTask-formatted EST string.</summary>
 	public static string ToEstString(this DateTimeOffset dateTimeOffset)
