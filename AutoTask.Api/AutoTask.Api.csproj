@@ -42,6 +42,9 @@
     <PackageReference Include="System.ServiceModel.Security" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="AutoTask.Api.Test" />
+  </ItemGroup>
+  <ItemGroup>
     <WCFMetadata Include="Connected Services" />
   </ItemGroup>
   <ItemGroup>
