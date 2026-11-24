@@ -4,7 +4,6 @@
     <TargetFramework>net11.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Copyright>Panoramic Data Limited 2026</Copyright>
     <Description>AutoTask API</Description>
     <PackageProjectUrl>https://github.com/panoramicdata/AutoTask.Api</PackageProjectUrl>
     <PackageIcon>Icon.png</PackageIcon>
